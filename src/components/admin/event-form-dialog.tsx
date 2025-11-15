@@ -63,14 +63,64 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
 
   useEffect(() => {
     if (event) {
-      setFormData({
-        ...event,
-        pemateri: Array.isArray(event.pemateri) ? event.pemateri : JSON.parse(event.pemateri || '[]'),
-        waktuEvent: Array.isArray(event.waktuEvent) ? event.waktuEvent : JSON.parse(event.waktuEvent || '[]'),
-        jenisKepesertaan: Array.isArray(event.jenisKepesertaan) ? event.jenisKepesertaan : JSON.parse(event.jenisKepesertaan || '[]'),
-        benefit: Array.isArray(event.benefit) ? event.benefit : JSON.parse(event.benefit || '[]'),
-        kodeVoucher: Array.isArray(event.kodeVoucher) ? event.kodeVoucher : JSON.parse(event.kodeVoucher || '[]'),
-      });
+      try {
+        const parsePemateri = () => {
+          if (Array.isArray(event.pemateri)) return event.pemateri;
+          if (typeof event.pemateri === 'string') return JSON.parse(event.pemateri || '[]');
+          return [];
+        };
+
+        const parseWaktuEvent = () => {
+          if (Array.isArray(event.waktuEvent)) return event.waktuEvent;
+          if (typeof event.waktuEvent === 'string') return JSON.parse(event.waktuEvent || '[]');
+          return [];
+        };
+
+        const parseJenisKepesertaan = () => {
+          if (Array.isArray(event.jenisKepesertaan)) return event.jenisKepesertaan;
+          if (typeof event.jenisKepesertaan === 'string') {
+            const parsed = JSON.parse(event.jenisKepesertaan || '[]');
+            return Array.isArray(parsed) ? parsed : [];
+          }
+          return [];
+        };
+
+        const parseBenefit = () => {
+          if (Array.isArray(event.benefit)) return event.benefit;
+          if (typeof event.benefit === 'string') return JSON.parse(event.benefit || '[]');
+          return [];
+        };
+
+        const parseKodeVoucher = () => {
+          if (Array.isArray(event.kodeVoucher)) return event.kodeVoucher;
+          if (typeof event.kodeVoucher === 'string') return JSON.parse(event.kodeVoucher || '[]');
+          return [];
+        };
+
+        setFormData({
+          ...event,
+          pemateri: parsePemateri(),
+          waktuEvent: parseWaktuEvent(),
+          jenisKepesertaan: parseJenisKepesertaan(),
+          benefit: parseBenefit(),
+          kodeVoucher: parseKodeVoucher(),
+        });
+      } catch (error) {
+        console.error('Error parsing event data:', error);
+        // Reset to empty form on error
+        setFormData({
+          kodeEvent: '',
+          namaEvent: '',
+          pemateri: [],
+          tema: '',
+          waktuEvent: [],
+          jenisKepesertaan: [],
+          benefit: [],
+          kodeVoucher: [],
+          flyerImage: '',
+          statusEvent: 'Pendaftaran'
+        });
+      }
     } else {
       setFormData({
         kodeEvent: '',
@@ -214,6 +264,13 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validation
+    if (formData.jenisKepesertaan.length === 0) {
+      alert('Tambahkan minimal 1 jenis kepesertaan (tier)');
+      return;
+    }
+    
     onSave(formData);
   };
 
@@ -484,16 +541,6 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
                 placeholder="https://example.com/image.jpg"
               />
             </div>
-          </div>
-
-          <div>
-            <Label htmlFor="linkGrupWa">Link Grup WhatsApp</Label>
-            <Input
-              id="linkGrupWa"
-              value={formData.linkGrupWa}
-              onChange={(e) => setFormData({...formData, linkGrupWa: e.target.value})}
-              placeholder="https://chat.whatsapp.com/..."
-            />
           </div>
 
           <div>
