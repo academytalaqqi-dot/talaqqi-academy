@@ -27,10 +27,10 @@ async function main() {
       pemateri: JSON.stringify(['Ustadz Ahmad Rahman', 'Ustadzah Fatimah']),
       tema: 'Belajar Tajwid dari Nol untuk Pemula',
       waktuEvent: JSON.stringify(['2024-01-15 19:00', '2024-01-16 19:00']),
-      jenisKepesertaan: 'Gratis',
-      nominalInfaq: 0,
+      jenisKepesertaan: JSON.stringify([
+        { nama: 'Gratis', harga: 0, linkGrupWa: 'https://chat.whatsapp.com/ABC123' }
+      ]),
       benefit: JSON.stringify(['Sertifikat', 'Link Rekaman', 'Modul PDF']),
-      linkGrupWa: 'https://chat.whatsapp.com/ABC123',
       statusEvent: 'Pendaftaran'
     }
   });
@@ -43,10 +43,11 @@ async function main() {
       pemateri: JSON.stringify(['Dr. Muhammad Hassan']),
       tema: 'Meningkatkan Kemampuan Berbicara di Depan Umum',
       waktuEvent: JSON.stringify(['2024-01-20 09:00', '2024-01-21 09:00']),
-      jenisKepesertaan: 'Berbayar',
-      nominalInfaq: 20000,
+      jenisKepesertaan: JSON.stringify([
+        { nama: 'Regular', harga: 50000, linkGrupWa: 'https://chat.whatsapp.com/DEF456' },
+        { nama: 'VIP', harga: 100000, linkGrupWa: 'https://chat.whatsapp.com/VIP789' }
+      ]),
       benefit: JSON.stringify(['Sertifikat', 'Link Rekaman', 'Materi Workshop', 'Video Tutorial']),
-      linkGrupWa: 'https://chat.whatsapp.com/DEF456',
       statusEvent: 'Pendaftaran'
     }
   });

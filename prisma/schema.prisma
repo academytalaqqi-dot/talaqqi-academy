@@ -23,23 +23,21 @@ model Admin {
 }
 
 model Event {
-  id                String   @id @default(cuid())
-  kodeEvent         String   @unique
-  namaEvent         String
-  pemateri          String   // JSON array of speakers
-  tema              String
-  waktuEvent        String   // JSON array of dates and times
-  jenisKepesertaan  String   // "Gratis" or "Berbayar"
-  nominalInfaq      Int      @default(0)
-  benefit           String   // JSON array of benefits
-  kodeVoucher       String?  // JSON array of voucher codes
-  flyerImage        String?
-  linkGrupWa        String?
-  statusEvent       String   @default("Pendaftaran") // "Pendaftaran", "Berjalan", "Selesai"
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id                  String   @id @default(cuid())
+  kodeEvent           String   @unique
+  namaEvent           String
+  pemateri            String   // JSON array of speakers
+  tema                String
+  waktuEvent          String   // JSON array of dates and times
+  jenisKepesertaan    String   // JSON array of participation types with price and WA link
+  benefit             String   // JSON array of benefits
+  kodeVoucher         String?  // JSON array of voucher codes
+  flyerImage          String?
+  statusEvent         String   @default("Pendaftaran") // "Pendaftaran", "Berjalan", "Selesai"
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
   
-  pendaftaran       Pendaftaran[]
+  pendaftaran         Pendaftaran[]
 }
 
 model Pendaftaran {

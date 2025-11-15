@@ -354,10 +354,22 @@ export default function AdminDashboard() {
                   <TableBody>
                     {events.map((event) => {
                       const pemateriList = JSON.parse(event.pemateri || '[]');
+                      const tiersList = JSON.parse(event.jenisKepesertaan || '[]');
                       return (
                         <TableRow key={event.id}>
                           <TableCell className="font-medium">{event.kodeEvent}</TableCell>
-                          <TableCell>{event.namaEvent}</TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{event.namaEvent}</div>
+                              <div className="flex gap-1 mt-1 flex-wrap">
+                                {tiersList.map((tier: any, idx: number) => (
+                                  <Badge key={idx} variant="outline" className="text-xs">
+                                    {tier.nama}: Rp {tier.harga.toLocaleString('id-ID')}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          </TableCell>
                           <TableCell>{pemateriList.join(', ')}</TableCell>
                           <TableCell>
                             <Badge variant={event.statusEvent === 'Pendaftaran' ? 'default' : 'secondary'}>

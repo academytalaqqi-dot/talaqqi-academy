@@ -10,6 +10,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { X, Plus, Upload, Image as ImageIcon } from 'lucide-react';
 
+interface ParticipationTier {
+  nama: string;
+  harga: number;
+  linkGrupWa: string;
+}
+
 interface Event {
   id?: string;
   kodeEvent: string;
@@ -17,12 +23,10 @@ interface Event {
   pemateri: string[];
   tema: string;
   waktuEvent: string[];
-  jenisKepesertaan: string;
-  nominalInfaq: number;
+  jenisKepesertaan: ParticipationTier[];
   benefit: string[];
   kodeVoucher: string[];
   flyerImage: string;
-  linkGrupWa: string;
   statusEvent: string;
 }
 
@@ -40,12 +44,10 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
     pemateri: [],
     tema: '',
     waktuEvent: [],
-    jenisKepesertaan: 'Gratis',
-    nominalInfaq: 0,
+    jenisKepesertaan: [],
     benefit: [],
     kodeVoucher: [],
     flyerImage: '',
-    linkGrupWa: '',
     statusEvent: 'Pendaftaran'
   });
 
@@ -53,6 +55,9 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
   const [newWaktu, setNewWaktu] = useState('');
   const [newBenefit, setNewBenefit] = useState('');
   const [newVoucher, setNewVoucher] = useState('');
+  const [newTierNama, setNewTierNama] = useState('');
+  const [newTierHarga, setNewTierHarga] = useState(0);
+  const [newTierLink, setNewTierLink] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
 
@@ -148,6 +153,29 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
     setFormData(prev => ({
       ...prev,
       kodeVoucher: prev.kodeVoucher.filter((_, i) => i !== index)
+    }));
+  };
+
+  const addParticipationTier = () => {
+    if (newTierNama.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        jenisKepesertaan: [...prev.jenisKepesertaan, {
+          nama: newTierNama.trim(),
+          harga: newTierHarga,
+          linkGrupWa: newTierLink.trim()
+        }]
+      }));
+      setNewTierNama('');
+      setNewTierHarga(0);
+      setNewTierLink('');
+    }
+  };
+
+  const removeParticipationTier = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      jenisKepesertaan: prev.jenisKepesertaan.filter((_, i) => i !== index)
     }));
   };
 
@@ -283,31 +311,66 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="jenisKepesertaan">Jenis Kepesertaan</Label>
-              <Select 
-                value={formData.jenisKepesertaan} 
-                onValueChange={(value) => setFormData({...formData, jenisKepesertaan: value})}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Gratis">Gratis</SelectItem>
-                  <SelectItem value="Berbayar">Berbayar</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="nominalInfaq">Nominal Infaq</Label>
-              <Input
-                id="nominalInfaq"
-                type="number"
-                value={formData.nominalInfaq}
-                onChange={(e) => setFormData({...formData, nominalInfaq: parseInt(e.target.value) || 0})}
-                disabled={formData.jenisKepesertaan === 'Gratis'}
-              />
+          <div>
+            <Label>Jenis Kepesertaan</Label>
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <Input
+                  value={newTierNama}
+                  onChange={(e) => setNewTierNama(e.target.value)}
+                  placeholder="Nama tier (e.g., Gratis, VIP)"
+                />
+                <Input
+                  type="number"
+                  value={newTierHarga}
+                  onChange={(e) => setNewTierHarga(parseInt(e.target.value) || 0)}
+                  placeholder="Harga (Rp)"
+                />
+                <div className="flex gap-2">
+                  <Input
+                    value={newTierLink}
+                    onChange={(e) => setNewTierLink(e.target.value)}
+                    placeholder="Link Grup WA"
+                    className="flex-1"
+                  />
+                  <Button type="button" onClick={addParticipationTier}>
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                {formData.jenisKepesertaan.map((tier, index) => (
+                  <div key={index} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="default">{tier.nama}</Badge>
+                        <span className="text-sm font-semibold text-emerald-600">
+                          Rp {tier.harga.toLocaleString('id-ID')}
+                        </span>
+                      </div>
+                      {tier.linkGrupWa && (
+                        <p className="text-xs text-gray-500 mt-1 truncate">
+                          WA: {tier.linkGrupWa}
+                        </p>
+                      )}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeParticipationTier(index)}
+                    >
+                      <X className="w-4 h-4 text-red-600" />
+                    </Button>
+                  </div>
+                ))}
+                {formData.jenisKepesertaan.length === 0 && (
+                  <p className="text-sm text-gray-500 text-center py-4">
+                    Belum ada tier kepesertaan. Tambahkan minimal 1 tier.
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
