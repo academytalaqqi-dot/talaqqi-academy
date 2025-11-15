@@ -11,6 +11,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { CalendarDays, Users, MapPin, Phone, Clock, Star } from 'lucide-react';
 
+interface ParticipationTier {
+  nama: string;
+  harga: number;
+  linkGrupWa: string;
+}
+
 interface Event {
   id: string;
   kodeEvent: string;
@@ -19,10 +25,8 @@ interface Event {
   tema: string;
   waktuEvent: string;
   jenisKepesertaan: string;
-  nominalInfaq: number;
   benefit: string;
   flyerImage: string;
-  linkGrupWa: string;
   statusEvent: string;
 }
 
@@ -34,7 +38,7 @@ export default function Home() {
     kotaDomisili: '',
     umur: '',
     noWhatsapp: '',
-    jenisKepesertaan: '',
+    selectedTier: '',
     kodeVoucher: '',
     buktiTransfer: ''
   });
@@ -59,6 +63,14 @@ export default function Home() {
     e.preventDefault();
     if (!selectedEvent) return;
 
+    const tiers = JSON.parse(selectedEvent.jenisKepesertaan || '[]');
+    const selectedTierData = tiers.find((t: ParticipationTier) => t.nama === formData.selectedTier);
+    
+    if (!selectedTierData) {
+      alert('Pilih jenis kepesertaan terlebih dahulu');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const response = await fetch('/api/pendaftaran', {
@@ -67,10 +79,15 @@ export default function Home() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ...formData,
-          eventId: selectedEvent.id,
+          namaPendaftar: formData.namaPendaftar,
+          kotaDomisili: formData.kotaDomisili,
           umur: parseInt(formData.umur),
-          nominalPembayaran: selectedEvent.nominalInfaq,
+          noWhatsapp: formData.noWhatsapp,
+          eventId: selectedEvent.id,
+          jenisKepesertaan: selectedTierData.nama,
+          nominalPembayaran: selectedTierData.harga,
+          kodeVoucher: formData.kodeVoucher,
+          buktiTransfer: formData.buktiTransfer,
         }),
       });
 
@@ -81,11 +98,10 @@ export default function Home() {
           kotaDomisili: '',
           umur: '',
           noWhatsapp: '',
-          jenisKepesertaan: '',
+          selectedTier: '',
           kodeVoucher: '',
           buktiTransfer: ''
         });
-        setSelectedEvent(null);
       } else {
         alert('Gagal mendaftar, silakan coba lagi');
       }
@@ -165,6 +181,9 @@ export default function Home() {
             {events.map((event) => {
               const pemateriList = JSON.parse(event.pemateri || '[]');
               const waktuList = JSON.parse(event.waktuEvent || '[]');
+              const tiersList: ParticipationTier[] = JSON.parse(event.jenisKepesertaan || '[]');
+              const minPrice = tiersList.length > 0 ? Math.min(...tiersList.map(t => t.harga)) : 0;
+              const maxPrice = tiersList.length > 0 ? Math.max(...tiersList.map(t => t.harga)) : 0;
               
               return (
                 <Card key={event.id} className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -196,15 +215,25 @@ export default function Home() {
                         <Clock className="w-4 h-4 mr-2 text-emerald-600" />
                         <span>{waktuList[0]}</span>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <div className="text-lg font-bold text-emerald-700">
-                          {event.jenisKepesertaan === 'Gratis' ? (
-                            <span className="text-green-600">Gratis</span>
-                          ) : (
-                            formatRupiah(event.nominalInfaq)
-                          )}
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap gap-1">
+                          {tiersList.map((tier, idx) => (
+                            <Badge key={idx} variant="outline" className="text-xs">
+                              {tier.nama}: {tier.harga === 0 ? 'Gratis' : formatRupiah(tier.harga)}
+                            </Badge>
+                          ))}
                         </div>
-                        <Dialog>
+                        <div className="flex justify-between items-center">
+                          <div className="text-lg font-bold text-emerald-700">
+                            {minPrice === 0 && maxPrice === 0 ? (
+                              <span className="text-green-600">Gratis</span>
+                            ) : minPrice === maxPrice ? (
+                              formatRupiah(minPrice)
+                            ) : (
+                              <span>{formatRupiah(minPrice)} - {formatRupiah(maxPrice)}</span>
+                            )}
+                          </div>
+                          <Dialog>
                           <DialogTrigger asChild>
                             <Button 
                               className="bg-emerald-600 hover:bg-emerald-700"
@@ -229,10 +258,7 @@ export default function Home() {
                                   Pendaftaran Berhasil!
                                 </h3>
                                 <p className="text-gray-600 mb-4">
-                                  {selectedEvent?.jenisKepesertaan === 'Gratis' 
-                                    ? `Terima kasih telah mendaftar. Link grup WhatsApp: ${selectedEvent?.linkGrupWa}`
-                                    : 'Pendaftaran Anda sedang divalidasi oleh admin. Anda akan menerima informasi lebih lanjut via WhatsApp.'
-                                  }
+                                  Terima kasih telah mendaftar! Anda akan menerima informasi lebih lanjut via WhatsApp.
                                 </p>
                                 <Button onClick={() => setRegistrationSuccess(false)}>
                                   Tutup
@@ -281,19 +307,29 @@ export default function Home() {
                                 </div>
                                 
                                 <div>
-                                  <Label htmlFor="jenisKepesertaan">Jenis Kepesertaan</Label>
-                                  <Select value={formData.jenisKepesertaan} onValueChange={(value) => setFormData({...formData, jenisKepesertaan: value})}>
+                                  <Label htmlFor="selectedTier">Jenis Kepesertaan</Label>
+                                  <Select 
+                                    value={formData.selectedTier} 
+                                    onValueChange={(value) => setFormData({...formData, selectedTier: value})}
+                                  >
                                     <SelectTrigger>
                                       <SelectValue placeholder="Pilih jenis kepesertaan" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      <SelectItem value="Gratis">Gratis</SelectItem>
-                                      <SelectItem value="Berbayar">Berbayar ({formatRupiah(selectedEvent?.nominalInfaq || 0)})</SelectItem>
+                                      {selectedEvent && JSON.parse(selectedEvent.jenisKepesertaan || '[]').map((tier: ParticipationTier, idx: number) => (
+                                        <SelectItem key={idx} value={tier.nama}>
+                                          {tier.nama} - {tier.harga === 0 ? 'Gratis' : formatRupiah(tier.harga)}
+                                        </SelectItem>
+                                      ))}
                                     </SelectContent>
                                   </Select>
                                 </div>
 
-                                {formData.jenisKepesertaan === 'Berbayar' && (
+                                {selectedEvent && formData.selectedTier && (() => {
+                                  const tiers = JSON.parse(selectedEvent.jenisKepesertaan || '[]');
+                                  const tier = tiers.find((t: ParticipationTier) => t.nama === formData.selectedTier);
+                                  return tier && tier.harga > 0;
+                                })() && (
                                   <>
                                     <div>
                                       <Label htmlFor="kodeVoucher">Kode Voucher (opsional)</Label>
@@ -316,19 +352,29 @@ export default function Home() {
                                   </>
                                 )}
 
-                                <div className="bg-gray-50 p-4 rounded-lg">
-                                  <h4 className="font-semibold text-emerald-800 mb-2">Informasi Tagihan:</h4>
-                                  <p className="text-sm text-gray-600">
-                                    Total yang harus dibayar: <span className="font-bold text-emerald-700">
-                                      {formData.jenisKepesertaan === 'Gratis' ? 'Gratis' : formatRupiah(selectedEvent?.nominalInfaq || 0)}
-                                    </span>
-                                  </p>
-                                  {formData.jenisKepesertaan === 'Berbayar' && (
-                                    <p className="text-xs text-gray-500 mt-1">
-                                      Silakan transfer ke rekening yang tersedia dan upload bukti transfer
-                                    </p>
-                                  )}
-                                </div>
+                                {formData.selectedTier && selectedEvent && (() => {
+                                  const tiers = JSON.parse(selectedEvent.jenisKepesertaan || '[]');
+                                  const tier = tiers.find((t: ParticipationTier) => t.nama === formData.selectedTier);
+                                  
+                                  return tier && (
+                                    <div className="bg-gray-50 p-4 rounded-lg">
+                                      <h4 className="font-semibold text-emerald-800 mb-2">Informasi Tagihan:</h4>
+                                      <p className="text-sm text-gray-600 mb-1">
+                                        Paket: <span className="font-semibold">{tier.nama}</span>
+                                      </p>
+                                      <p className="text-sm text-gray-600">
+                                        Total yang harus dibayar: <span className="font-bold text-emerald-700">
+                                          {tier.harga === 0 ? 'Gratis' : formatRupiah(tier.harga)}
+                                        </span>
+                                      </p>
+                                      {tier.harga > 0 && (
+                                        <p className="text-xs text-gray-500 mt-1">
+                                          Silakan transfer ke rekening yang tersedia dan upload bukti transfer
+                                        </p>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
 
                                 <Button 
                                   type="submit" 
@@ -341,6 +387,7 @@ export default function Home() {
                             )}
                           </DialogContent>
                         </Dialog>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
