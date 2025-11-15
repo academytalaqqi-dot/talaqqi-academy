@@ -143,7 +143,7 @@ export default function Home() {
   };
 
   const handleVoucherCheck = async () => {
-    if (!formData.kodeVoucher.trim()) {
+    if (!formData.kodeVoucher.trim() || !selectedEvent) {
       setVoucherError('');
       setVoucherDiscount(0);
       return;
@@ -158,7 +158,10 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ kodeVoucher: formData.kodeVoucher }),
+        body: JSON.stringify({ 
+          kodeVoucher: formData.kodeVoucher,
+          eventId: selectedEvent.id
+        }),
       });
 
       const data = await response.json();
