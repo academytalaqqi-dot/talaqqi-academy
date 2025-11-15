@@ -75,13 +75,20 @@ export default function Home() {
     try {
       const response = await fetch('/api/referensi');
       const data = await response.json();
-      if (data && data.length > 0) {
+      
+      console.log('Bank info data:', data); // Debug
+      
+      // API returns single object, not array
+      if (data && data.namaBank && data.nomorRekening) {
+        console.log('Setting bank info'); // Debug
         setBankInfo({
-          namaLembaga: data[0].namaLembaga,
-          namaBank: data[0].namaBank,
-          nomorRekening: data[0].nomorRekening,
-          namaPemilik: data[0].namaPemilik
+          namaLembaga: data.namaLembaga,
+          namaBank: data.namaBank,
+          nomorRekening: data.nomorRekening,
+          namaPemilik: data.namaPemilik
         });
+      } else {
+        console.log('Bank info validation failed - missing required fields'); // Debug
       }
     } catch (error) {
       console.error('Error fetching bank info:', error);
@@ -554,9 +561,9 @@ export default function Home() {
                                           </p>
                                           
                                           {/* Bank Transfer Info */}
-                                          {bankInfo && (
-                                            <div className="mt-4 pt-4 border-t border-gray-300">
-                                              <p className="text-xs font-semibold text-gray-700 mb-2">Transfer ke rekening:</p>
+                                          <div className="mt-4 pt-4 border-t border-gray-300">
+                                            <p className="text-xs font-semibold text-gray-700 mb-2">Transfer ke rekening:</p>
+                                            {bankInfo ? (
                                               <div className="bg-white rounded-lg p-3 border border-gray-200">
                                                 <div className="grid grid-cols-3 gap-2 text-xs">
                                                   <div className="col-span-3 sm:col-span-1">
@@ -573,8 +580,14 @@ export default function Home() {
                                                   </div>
                                                 </div>
                                               </div>
-                                            </div>
-                                          )}
+                                            ) : (
+                                              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                                                <p className="text-xs text-yellow-800">
+                                                  ⚠️ Info rekening belum tersedia. Silakan hubungi admin untuk informasi pembayaran.
+                                                </p>
+                                              </div>
+                                            )}
+                                          </div>
                                         </>
                                       )}
                                       {tier.harga === 0 && (
