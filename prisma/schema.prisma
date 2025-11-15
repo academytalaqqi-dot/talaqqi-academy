@@ -1,0 +1,81 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Event {
+  id                String   @id @default(cuid())
+  kodeEvent         String   @unique
+  namaEvent         String
+  pemateri          String   // JSON array of speakers
+  tema              String
+  waktuEvent        String   // JSON array of dates and times
+  jenisKepesertaan  String   // "Gratis" or "Berbayar"
+  nominalInfaq      Int      @default(0)
+  benefit           String   // JSON array of benefits
+  kodeVoucher       String?  // JSON array of voucher codes
+  flyerImage        String?
+  linkGrupWa        String?
+  statusEvent       String   @default("Pendaftaran") // "Pendaftaran", "Berjalan", "Selesai"
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  pendaftaran       Pendaftaran[]
+}
+
+model Pendaftaran {
+  id                String   @id @default(cuid())
+  namaPendaftar     String
+  kotaDomisili      String
+  umur              Int
+  noWhatsapp        String
+  eventId           String
+  jenisKepesertaan  String   // "Gratis" or "Berbayar"
+  nominalPembayaran Int
+  kodeVoucher       String?
+  buktiTransfer     String?
+  waktuPendaftaran  DateTime @default(now())
+  status            String   @default("Pending") // "Pending", "Approved", "Rejected"
+  
+  event             Event    @relation(fields: [eventId], references: [id])
+}
+
+model Referensi {
+  id                String   @id @default(cuid())
+  namaLembaga       String
+  nomorRekening     String
+  namaBank          String
+  namaPemilik       String
+  noWhatsappAdmin   String
+  logo              String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Voucher {
+  id          String   @id @default(cuid())
+  kodeVoucher String   @unique
+  potongan    Int      @default(0)
+  status      String   @default("Aktif") // "Aktif", "Tidak Aktif"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
