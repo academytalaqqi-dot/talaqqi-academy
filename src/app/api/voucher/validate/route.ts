@@ -21,23 +21,33 @@ export async function POST(request: NextRequest) {
           
           // Check if kodeVoucher exists in event vouchers array
           if (Array.isArray(eventVouchers)) {
-            const foundVoucher = eventVouchers.find(
-              (v: string) => v.toUpperCase() === kodeVoucher.toUpperCase()
-            );
+            // Support both old format (string array) and new format (object array)
+            const foundVoucher = eventVouchers.find((v: any) => {
+              if (typeof v === 'string') {
+                return v.toUpperCase() === kodeVoucher.toUpperCase();
+              }
+              return v.kode?.toUpperCase() === kodeVoucher.toUpperCase();
+            });
             
             if (foundVoucher) {
               // Event-specific voucher found
-              // For now, use fixed discount from Voucher table if exists, otherwise default 10%
-              const globalVoucher = await db.voucher.findUnique({
-                where: { kodeVoucher: kodeVoucher.toUpperCase() }
-              });
+              let discount = 10; // default
               
-              const discount = globalVoucher?.potongan || 10;
+              if (typeof foundVoucher === 'object' && foundVoucher.potongan) {
+                // New format: use discount from event voucher
+                discount = foundVoucher.potongan;
+              } else {
+                // Old format (string): fallback to global Voucher table
+                const globalVoucher = await db.voucher.findUnique({
+                  where: { kodeVoucher: kodeVoucher.toUpperCase() }
+                });
+                discount = globalVoucher?.potongan || 10;
+              }
               
               return NextResponse.json({
                 valid: true,
                 voucher: {
-                  kodeVoucher: foundVoucher,
+                  kodeVoucher: typeof foundVoucher === 'string' ? foundVoucher : foundVoucher.kode,
                   potongan: discount
                 }
               });

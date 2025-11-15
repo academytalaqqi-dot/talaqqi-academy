@@ -54,10 +54,13 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
   const [newPemateri, setNewPemateri] = useState('');
   const [newWaktu, setNewWaktu] = useState('');
   const [newBenefit, setNewBenefit] = useState('');
-  const [newVoucher, setNewVoucher] = useState('');
+  const [newVoucherKode, setNewVoucherKode] = useState('');
+  const [newVoucherPotongan, setNewVoucherPotongan] = useState(0);
   const [newTierNama, setNewTierNama] = useState('');
   const [newTierHarga, setNewTierHarga] = useState(0);
   const [newTierLink, setNewTierLink] = useState('');
+  const [newTierBenefit, setNewTierBenefit] = useState('');
+  const [editingTierIndex, setEditingTierIndex] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
 
@@ -77,10 +80,21 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
         };
 
         const parseJenisKepesertaan = () => {
-          if (Array.isArray(event.jenisKepesertaan)) return event.jenisKepesertaan;
+          if (Array.isArray(event.jenisKepesertaan)) {
+            // Ensure all tiers have benefit array
+            return event.jenisKepesertaan.map(tier => ({
+              ...tier,
+              benefit: tier.benefit || []
+            }));
+          }
           if (typeof event.jenisKepesertaan === 'string') {
             const parsed = JSON.parse(event.jenisKepesertaan || '[]');
-            return Array.isArray(parsed) ? parsed : [];
+            if (Array.isArray(parsed)) {
+              return parsed.map(tier => ({
+                ...tier,
+                benefit: tier.benefit || []
+              }));
+            }
           }
           return [];
         };
@@ -93,7 +107,18 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
 
         const parseKodeVoucher = () => {
           if (Array.isArray(event.kodeVoucher)) return event.kodeVoucher;
-          if (typeof event.kodeVoucher === 'string') return JSON.parse(event.kodeVoucher || '[]');
+          if (typeof event.kodeVoucher === 'string') {
+            try {
+              const parsed = JSON.parse(event.kodeVoucher || '[]');
+              // Convert old format (string array) to new format (object array)
+              if (parsed.length > 0 && typeof parsed[0] === 'string') {
+                return parsed.map((kode: string) => ({ kode, potongan: 10 }));
+              }
+              return parsed;
+            } catch {
+              return [];
+            }
+          }
           return [];
         };
 
@@ -189,12 +214,16 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
   };
 
   const addVoucher = () => {
-    if (newVoucher.trim()) {
+    if (newVoucherKode.trim() && newVoucherPotongan > 0) {
       setFormData(prev => ({
         ...prev,
-        kodeVoucher: [...prev.kodeVoucher, newVoucher.trim()]
+        kodeVoucher: [...prev.kodeVoucher, {
+          kode: newVoucherKode.trim().toUpperCase(),
+          potongan: newVoucherPotongan
+        }]
       }));
-      setNewVoucher('');
+      setNewVoucherKode('');
+      setNewVoucherPotongan(0);
     }
   };
 
@@ -207,14 +236,30 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
 
   const addParticipationTier = () => {
     if (newTierNama.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        jenisKepesertaan: [...prev.jenisKepesertaan, {
-          nama: newTierNama.trim(),
-          harga: newTierHarga,
-          linkGrupWa: newTierLink.trim()
-        }]
-      }));
+      const newTier = {
+        nama: newTierNama.trim(),
+        harga: newTierHarga,
+        linkGrupWa: newTierLink.trim(),
+        benefit: []
+      };
+
+      if (editingTierIndex !== null) {
+        // Update existing tier
+        setFormData(prev => ({
+          ...prev,
+          jenisKepesertaan: prev.jenisKepesertaan.map((tier, idx) => 
+            idx === editingTierIndex ? { ...tier, ...newTier, benefit: tier.benefit } : tier
+          )
+        }));
+        setEditingTierIndex(null);
+      } else {
+        // Add new tier
+        setFormData(prev => ({
+          ...prev,
+          jenisKepesertaan: [...prev.jenisKepesertaan, newTier]
+        }));
+      }
+      
       setNewTierNama('');
       setNewTierHarga(0);
       setNewTierLink('');
@@ -225,6 +270,31 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
     setFormData(prev => ({
       ...prev,
       jenisKepesertaan: prev.jenisKepesertaan.filter((_, i) => i !== index)
+    }));
+  };
+
+  const addBenefitToTier = (tierIndex: number) => {
+    if (newTierBenefit.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        jenisKepesertaan: prev.jenisKepesertaan.map((tier, idx) => 
+          idx === tierIndex 
+            ? { ...tier, benefit: [...(tier.benefit || []), newTierBenefit.trim()] }
+            : tier
+        )
+      }));
+      setNewTierBenefit('');
+    }
+  };
+
+  const removeBenefitFromTier = (tierIndex: number, benefitIndex: number) => {
+    setFormData(prev => ({
+      ...prev,
+      jenisKepesertaan: prev.jenisKepesertaan.map((tier, idx) => 
+        idx === tierIndex 
+          ? { ...tier, benefit: tier.benefit?.filter((_, bIdx) => bIdx !== benefitIndex) || [] }
+          : tier
+      )
     }));
   };
 
@@ -397,28 +467,73 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
               
               <div className="space-y-2">
                 {formData.jenisKepesertaan.map((tier, index) => (
-                  <div key={index} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="default">{tier.nama}</Badge>
-                        <span className="text-sm font-semibold text-emerald-600">
-                          Rp {tier.harga.toLocaleString('id-ID')}
-                        </span>
+                  <div key={index} className="p-3 bg-gray-50 rounded-lg border">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="default">{tier.nama}</Badge>
+                          <span className="text-sm font-semibold text-emerald-600">
+                            Rp {tier.harga.toLocaleString('id-ID')}
+                          </span>
+                        </div>
+                        {tier.linkGrupWa && (
+                          <p className="text-xs text-gray-500 mt-1 truncate">
+                            WA: {tier.linkGrupWa}
+                          </p>
+                        )}
                       </div>
-                      {tier.linkGrupWa && (
-                        <p className="text-xs text-gray-500 mt-1 truncate">
-                          WA: {tier.linkGrupWa}
-                        </p>
-                      )}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeParticipationTier(index)}
+                      >
+                        <X className="w-4 h-4 text-red-600" />
+                      </Button>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeParticipationTier(index)}
-                    >
-                      <X className="w-4 h-4 text-red-600" />
-                    </Button>
+
+                    {/* Benefits for this tier */}
+                    <div className="mt-2 pt-2 border-t border-gray-200">
+                      <Label className="text-xs text-gray-600">Benefit untuk tier ini:</Label>
+                      <div className="flex gap-2 mt-1 mb-2">
+                        <Input
+                          value={editingTierIndex === index ? newTierBenefit : ''}
+                          onChange={(e) => {
+                            setEditingTierIndex(index);
+                            setNewTierBenefit(e.target.value);
+                          }}
+                          placeholder="Tambah benefit"
+                          className="text-sm"
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              addBenefitToTier(index);
+                            }
+                          }}
+                        />
+                        <Button 
+                          type="button" 
+                          size="sm"
+                          onClick={() => addBenefitToTier(index)}
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {(tier.benefit || []).map((benefit, bIdx) => (
+                          <Badge key={bIdx} variant="outline" className="text-xs flex items-center gap-1">
+                            {benefit}
+                            <X 
+                              className="w-3 h-3 cursor-pointer" 
+                              onClick={() => removeBenefitFromTier(index, bIdx)}
+                            />
+                          </Badge>
+                        ))}
+                        {(!tier.benefit || tier.benefit.length === 0) && (
+                          <span className="text-xs text-gray-400">Belum ada benefit</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 ))}
                 {formData.jenisKepesertaan.length === 0 && (
@@ -460,10 +575,19 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
             <Label>Kode Voucher (opsional)</Label>
             <div className="flex gap-2 mb-2">
               <Input
-                value={newVoucher}
-                onChange={(e) => setNewVoucher(e.target.value)}
-                placeholder="Kode voucher"
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addVoucher())}
+                value={newVoucherKode}
+                onChange={(e) => setNewVoucherKode(e.target.value)}
+                placeholder="Kode voucher (contoh: DISKON50)"
+                className="flex-1"
+              />
+              <Input
+                type="number"
+                value={newVoucherPotongan}
+                onChange={(e) => setNewVoucherPotongan(parseInt(e.target.value) || 0)}
+                placeholder="Diskon %"
+                className="w-24"
+                min="0"
+                max="100"
               />
               <Button type="button" onClick={addVoucher}>
                 <Plus className="w-4 h-4" />
@@ -472,7 +596,7 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
             <div className="flex flex-wrap gap-2">
               {formData.kodeVoucher.map((voucher, index) => (
                 <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                  {voucher}
+                  {typeof voucher === 'string' ? voucher : `${voucher.kode} (${voucher.potongan}%)`}
                   <X 
                     className="w-3 h-3 cursor-pointer" 
                     onClick={() => removeVoucher(index)}

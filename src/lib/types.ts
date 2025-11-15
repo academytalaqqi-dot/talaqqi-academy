@@ -16,14 +16,15 @@ export interface EventBenefit {
 }
 
 export interface VoucherCode {
-  code: string;
-  discount: number;
+  kode: string;
+  potongan: number;
 }
 
 export interface ParticipationType {
   nama: string;
   harga: number;
   linkGrupWa: string;
+  benefit: string[];
 }
 
 export type EventStatus = "Pendaftaran" | "Berjalan" | "Selesai";

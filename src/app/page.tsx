@@ -408,6 +408,25 @@ export default function Home() {
                                       ))}
                                     </SelectContent>
                                   </Select>
+                                  
+                                  {/* Show benefits for selected tier */}
+                                  {selectedEvent && formData.selectedTier && (() => {
+                                    const tiers = JSON.parse(selectedEvent.jenisKepesertaan || '[]');
+                                    const tier = tiers.find((t: ParticipationTier) => t.nama === formData.selectedTier);
+                                    return tier && tier.benefit && tier.benefit.length > 0 && (
+                                      <div className="mt-2 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                                        <p className="text-sm font-semibold text-emerald-800 mb-2">Benefit yang didapat:</p>
+                                        <ul className="space-y-1">
+                                          {tier.benefit.map((benefit: string, idx: number) => (
+                                            <li key={idx} className="text-sm text-emerald-700 flex items-start gap-2">
+                                              <span className="text-emerald-600 mt-0.5">✓</span>
+                                              <span>{benefit}</span>
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    );
+                                  })()}
                                 </div>
 
                                 {selectedEvent && formData.selectedTier && (() => {
