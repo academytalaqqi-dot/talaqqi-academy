@@ -321,6 +321,39 @@ export default function Home() {
                             </Badge>
                           ))}
                         </div>
+                        
+                        {/* Show all unique benefits from all tiers */}
+                        {(() => {
+                          const allBenefits = new Set<string>();
+                          tiersList.forEach((tier) => {
+                            if (tier.benefit && Array.isArray(tier.benefit)) {
+                              tier.benefit.forEach((b: string) => allBenefits.add(b));
+                            }
+                          });
+                          
+                          if (allBenefits.size > 0) {
+                            return (
+                              <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-100">
+                                <p className="text-xs font-semibold text-emerald-800 mb-1.5">Benefit yang didapat:</p>
+                                <ul className="space-y-1">
+                                  {Array.from(allBenefits).slice(0, 3).map((benefit, idx) => (
+                                    <li key={idx} className="text-xs text-emerald-700 flex items-start gap-1.5">
+                                      <span className="text-emerald-600 mt-0.5">✓</span>
+                                      <span>{benefit}</span>
+                                    </li>
+                                  ))}
+                                  {allBenefits.size > 3 && (
+                                    <li className="text-xs text-emerald-600 font-medium">
+                                      +{allBenefits.size - 3} benefit lainnya
+                                    </li>
+                                  )}
+                                </ul>
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
+                        
                         <div className="flex justify-between items-center">
                           <div className="text-lg font-bold text-emerald-700">
                             {minPrice === 0 && maxPrice === 0 ? (
@@ -440,7 +473,19 @@ export default function Home() {
                                     <SelectContent>
                                       {selectedEvent && JSON.parse(selectedEvent.jenisKepesertaan || '[]').map((tier: ParticipationTier, idx: number) => (
                                         <SelectItem key={idx} value={tier.nama}>
-                                          {tier.nama} - {tier.harga === 0 ? 'Gratis' : formatRupiah(tier.harga)}
+                                          <div className="flex flex-col gap-0.5">
+                                            <div className="flex items-center gap-2">
+                                              <span className="font-medium">{tier.nama}</span>
+                                              <span className="text-emerald-600">
+                                                {tier.harga === 0 ? 'Gratis' : formatRupiah(tier.harga)}
+                                              </span>
+                                            </div>
+                                            {tier.benefit && tier.benefit.length > 0 && (
+                                              <span className="text-xs text-gray-500">
+                                                ✓ {tier.benefit.length} benefit tersedia
+                                              </span>
+                                            )}
+                                          </div>
                                         </SelectItem>
                                       ))}
                                     </SelectContent>
