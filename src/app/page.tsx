@@ -392,10 +392,36 @@ export default function Home() {
                             </Button>
                           </DialogTrigger>
                           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                            <DialogHeader>
-                              <DialogTitle className="text-emerald-800">
-                                Form Pendaftaran - {selectedEvent?.namaEvent}
+                            <DialogHeader className="space-y-3 pb-4 border-b">
+                              <DialogTitle className="text-2xl font-bold text-emerald-800">
+                                Form Pendaftaran
                               </DialogTitle>
+                              
+                              {/* Event Details */}
+                              {selectedEvent && (
+                                <div className="space-y-2 text-sm">
+                                  <div>
+                                    <span className="font-semibold text-gray-700">Event:</span>
+                                    <span className="ml-2 text-gray-900">{selectedEvent.namaEvent}</span>
+                                  </div>
+                                  <div>
+                                    <span className="font-semibold text-gray-700">Tema:</span>
+                                    <span className="ml-2 text-gray-600">{selectedEvent.tema}</span>
+                                  </div>
+                                  <div>
+                                    <span className="font-semibold text-gray-700">Pemateri:</span>
+                                    <span className="ml-2 text-gray-600">
+                                      {JSON.parse(selectedEvent.pemateri || '[]').join(', ')}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="font-semibold text-gray-700">Waktu:</span>
+                                    <span className="ml-2 text-gray-600">
+                                      {JSON.parse(selectedEvent.waktuEvent || '[]')[0]}
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
                             </DialogHeader>
                             
                             {registrationSuccess ? (
@@ -439,44 +465,45 @@ export default function Home() {
                               </div>
                             ) : (
                               <form onSubmit={handleSubmit} className="space-y-4">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <div>
-                                    <Label htmlFor="namaPendaftar">Nama Lengkap</Label>
-                                    <Input
-                                      id="namaPendaftar"
-                                      value={formData.namaPendaftar}
-                                      onChange={(e) => setFormData({...formData, namaPendaftar: e.target.value})}
-                                      required
-                                    />
-                                  </div>
-                                  <div>
-                                    <Label htmlFor="kotaDomisili">Kota Domisili</Label>
-                                    <Input
-                                      id="kotaDomisili"
-                                      value={formData.kotaDomisili}
-                                      onChange={(e) => setFormData({...formData, kotaDomisili: e.target.value})}
-                                      required
-                                    />
-                                  </div>
-                                  <div>
-                                    <Label htmlFor="umur">Usia</Label>
-                                    <Input
-                                      id="umur"
-                                      type="number"
-                                      value={formData.umur}
-                                      onChange={(e) => setFormData({...formData, umur: e.target.value})}
-                                      required
-                                    />
-                                  </div>
-                                  <div>
-                                    <Label htmlFor="noWhatsapp">No. WhatsApp</Label>
-                                    <Input
-                                      id="noWhatsapp"
-                                      value={formData.noWhatsapp}
-                                      onChange={(e) => setFormData({...formData, noWhatsapp: e.target.value})}
-                                      required
-                                    />
-                                  </div>
+                                <div>
+                                  <Label htmlFor="namaPendaftar">Nama Lengkap</Label>
+                                  <Input
+                                    id="namaPendaftar"
+                                    value={formData.namaPendaftar}
+                                    onChange={(e) => setFormData({...formData, namaPendaftar: e.target.value})}
+                                    required
+                                  />
+                                </div>
+                                
+                                <div>
+                                  <Label htmlFor="kotaDomisili">Kota Domisili</Label>
+                                  <Input
+                                    id="kotaDomisili"
+                                    value={formData.kotaDomisili}
+                                    onChange={(e) => setFormData({...formData, kotaDomisili: e.target.value})}
+                                    required
+                                  />
+                                </div>
+                                
+                                <div>
+                                  <Label htmlFor="umur">Usia</Label>
+                                  <Input
+                                    id="umur"
+                                    type="number"
+                                    value={formData.umur}
+                                    onChange={(e) => setFormData({...formData, umur: e.target.value})}
+                                    required
+                                  />
+                                </div>
+                                
+                                <div>
+                                  <Label htmlFor="noWhatsapp">No. WhatsApp</Label>
+                                  <Input
+                                    id="noWhatsapp"
+                                    value={formData.noWhatsapp}
+                                    onChange={(e) => setFormData({...formData, noWhatsapp: e.target.value})}
+                                    required
+                                  />
                                 </div>
                                 
                                 <div>
