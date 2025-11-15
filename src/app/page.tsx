@@ -134,8 +134,15 @@ export default function Home() {
       });
 
       if (response.ok) {
-        setRegistrationSuccess(true);
-        setRegisteredTier(selectedTierData);
+        // For free tier, open WhatsApp immediately
+        if (selectedTierData.harga === 0) {
+          window.open(selectedTierData.linkGrupWa, '_blank');
+        }
+        
+        // Show success message briefly
+        alert('✓ Pendaftaran berhasil! Terima kasih telah mendaftar.');
+        
+        // Reset form
         setFormData({
           namaPendaftar: '',
           kotaDomisili: '',
@@ -146,18 +153,13 @@ export default function Home() {
           buktiTransfer: ''
         });
         
-        // Auto close modal and return to home page
-        if (selectedTierData.harga === 0) {
-          // For free tier, open WhatsApp then close after 2 seconds
-          window.open(selectedTierData.linkGrupWa, '_blank');
-        }
+        // Close modal and scroll to top
+        setSelectedEvent(null);
+        setRegistrationSuccess(false);
+        setRegisteredTier(null);
         
-        // Close modal and reset state after showing success briefly
-        setTimeout(() => {
-          setSelectedEvent(null);
-          setRegistrationSuccess(false);
-          setRegisteredTier(null);
-        }, 2000);
+        // Scroll to top of page
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         alert('Gagal mendaftar, silakan coba lagi');
       }
