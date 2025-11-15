@@ -32,10 +32,8 @@ interface Event {
   tema: string;
   waktuEvent: string;
   jenisKepesertaan: string;
-  nominalInfaq: number;
   benefit: string;
   flyerImage: string;
-  linkGrupWa: string;
   statusEvent: string;
   _count: {
     pendaftaran: number;

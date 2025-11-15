@@ -44,12 +44,10 @@ export async function PATCH(
         pemateri: JSON.stringify(data.pemateri),
         tema: data.tema,
         waktuEvent: JSON.stringify(data.waktuEvent),
-        jenisKepesertaan: data.jenisKepesertaan,
-        nominalInfaq: data.nominalInfaq,
+        jenisKepesertaan: JSON.stringify(data.jenisKepesertaan),
         benefit: JSON.stringify(data.benefit),
         kodeVoucher: data.kodeVoucher ? JSON.stringify(data.kodeVoucher) : null,
         flyerImage: data.flyerImage,
-        linkGrupWa: data.linkGrupWa,
         statusEvent: data.statusEvent
       }
     });
