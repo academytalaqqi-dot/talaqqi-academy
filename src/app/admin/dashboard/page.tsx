@@ -49,8 +49,8 @@ interface Pendaftaran {
   eventId: string;
   jenisKepesertaan: string;
   nominalPembayaran: number;
-  kodeVoucher: string;
-  buktiTransfer: string;
+  kodeVoucher: string | null;
+  buktiTransfer: string | null;
   waktuPendaftaran: string;
   status: string;
   event: Event;
@@ -448,6 +448,8 @@ export default function AdminDashboard() {
                       <TableHead>Event</TableHead>
                       <TableHead>Jenis</TableHead>
                       <TableHead>Nominal</TableHead>
+                      <TableHead>Voucher</TableHead>
+                      <TableHead>Bukti</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Aksi</TableHead>
                     </TableRow>
@@ -466,6 +468,28 @@ export default function AdminDashboard() {
                           </Badge>
                         </TableCell>
                         <TableCell>{formatRupiah(p.nominalPembayaran)}</TableCell>
+                        <TableCell>
+                          {p.kodeVoucher ? (
+                            <Badge variant="secondary" className="text-xs">
+                              {p.kodeVoucher}
+                            </Badge>
+                          ) : (
+                            <span className="text-gray-400 text-xs">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {p.buktiTransfer ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(p.buktiTransfer || '', '_blank')}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          ) : (
+                            <span className="text-gray-400 text-xs">-</span>
+                          )}
+                        </TableCell>
                         <TableCell>
                           <Badge 
                             variant={

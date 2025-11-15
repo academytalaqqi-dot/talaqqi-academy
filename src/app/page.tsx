@@ -45,6 +45,9 @@ export default function Home() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [registeredTier, setRegisteredTier] = useState<ParticipationTier | null>(null);
+  const [voucherDiscount, setVoucherDiscount] = useState(0);
+  const [voucherError, setVoucherError] = useState('');
+  const [isCheckingVoucher, setIsCheckingVoucher] = useState(false);
 
   useEffect(() => {
     fetchEvents();
@@ -74,6 +77,9 @@ export default function Home() {
 
     setIsSubmitting(true);
     try {
+      // Calculate final price with discount
+      const finalPrice = selectedTierData.harga - (selectedTierData.harga * voucherDiscount / 100);
+      
       const response = await fetch('/api/pendaftaran', {
         method: 'POST',
         headers: {
@@ -86,8 +92,8 @@ export default function Home() {
           noWhatsapp: formData.noWhatsapp,
           eventId: selectedEvent.id,
           jenisKepesertaan: selectedTierData.nama,
-          nominalPembayaran: selectedTierData.harga,
-          kodeVoucher: formData.kodeVoucher,
+          nominalPembayaran: finalPrice,
+          kodeVoucher: voucherDiscount > 0 ? formData.kodeVoucher : '',
           buktiTransfer: formData.buktiTransfer,
         }),
       });
@@ -105,23 +111,18 @@ export default function Home() {
           buktiTransfer: ''
         });
         
-        // Auto close after showing success message
+        // Auto close modal and return to home page
         if (selectedTierData.harga === 0) {
-          // For free tier, open WhatsApp then close after 3 seconds
+          // For free tier, open WhatsApp then close after 2 seconds
           window.open(selectedTierData.linkGrupWa, '_blank');
-          setTimeout(() => {
-            setSelectedEvent(null);
-            setRegistrationSuccess(false);
-            setRegisteredTier(null);
-          }, 3000);
-        } else {
-          // For paid tier, close after 5 seconds
-          setTimeout(() => {
-            setSelectedEvent(null);
-            setRegistrationSuccess(false);
-            setRegisteredTier(null);
-          }, 5000);
         }
+        
+        // Close modal and reset state after showing success briefly
+        setTimeout(() => {
+          setSelectedEvent(null);
+          setRegistrationSuccess(false);
+          setRegisteredTier(null);
+        }, 2000);
       } else {
         alert('Gagal mendaftar, silakan coba lagi');
       }
@@ -139,6 +140,43 @@ export default function Home() {
       currency: 'IDR',
       minimumFractionDigits: 0,
     }).format(amount);
+  };
+
+  const handleVoucherCheck = async () => {
+    if (!formData.kodeVoucher.trim()) {
+      setVoucherError('');
+      setVoucherDiscount(0);
+      return;
+    }
+
+    setIsCheckingVoucher(true);
+    setVoucherError('');
+
+    try {
+      const response = await fetch('/api/voucher/validate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ kodeVoucher: formData.kodeVoucher }),
+      });
+
+      const data = await response.json();
+
+      if (data.valid) {
+        setVoucherDiscount(data.voucher.potongan);
+        setVoucherError('');
+      } else {
+        setVoucherError(data.error || 'Voucher tidak valid');
+        setVoucherDiscount(0);
+      }
+    } catch (error) {
+      console.error('Error checking voucher:', error);
+      setVoucherError('Gagal memeriksa voucher');
+      setVoucherDiscount(0);
+    } finally {
+      setIsCheckingVoucher(false);
+    }
   };
 
   return (
@@ -377,12 +415,34 @@ export default function Home() {
                                   <>
                                     <div>
                                       <Label htmlFor="kodeVoucher">Kode Voucher (opsional)</Label>
-                                      <Input
-                                        id="kodeVoucher"
-                                        value={formData.kodeVoucher}
-                                        onChange={(e) => setFormData({...formData, kodeVoucher: e.target.value})}
-                                        placeholder="Masukkan kode voucher jika ada"
-                                      />
+                                      <div className="flex gap-2">
+                                        <Input
+                                          id="kodeVoucher"
+                                          value={formData.kodeVoucher}
+                                          onChange={(e) => {
+                                            setFormData({...formData, kodeVoucher: e.target.value});
+                                            setVoucherError('');
+                                            setVoucherDiscount(0);
+                                          }}
+                                          placeholder="Masukkan kode voucher"
+                                        />
+                                        <Button
+                                          type="button"
+                                          onClick={handleVoucherCheck}
+                                          disabled={isCheckingVoucher || !formData.kodeVoucher.trim()}
+                                          variant="outline"
+                                        >
+                                          {isCheckingVoucher ? 'Cek...' : 'Cek'}
+                                        </Button>
+                                      </div>
+                                      {voucherError && (
+                                        <p className="text-sm text-red-600 mt-1">{voucherError}</p>
+                                      )}
+                                      {voucherDiscount > 0 && (
+                                        <p className="text-sm text-green-600 mt-1">
+                                          ✓ Voucher valid! Diskon: {voucherDiscount}%
+                                        </p>
+                                      )}
                                     </div>
                                     <div>
                                       <Label htmlFor="buktiTransfer">Upload Bukti Transfer</Label>
@@ -406,15 +466,36 @@ export default function Home() {
                                       <p className="text-sm text-gray-600 mb-1">
                                         Paket: <span className="font-semibold">{tier.nama}</span>
                                       </p>
-                                      <p className="text-sm text-gray-600">
-                                        Total yang harus dibayar: <span className="font-bold text-emerald-700">
-                                          {tier.harga === 0 ? 'Gratis' : formatRupiah(tier.harga)}
-                                        </span>
-                                      </p>
                                       {tier.harga > 0 && (
-                                        <p className="text-xs text-gray-500 mt-1">
-                                          Silakan transfer ke rekening yang tersedia dan upload bukti transfer
-                                        </p>
+                                        <>
+                                          <div className="space-y-1 mb-2">
+                                            <p className="text-sm text-gray-600 flex justify-between">
+                                              <span>Harga Normal:</span>
+                                              <span>{formatRupiah(tier.harga)}</span>
+                                            </p>
+                                            {voucherDiscount > 0 && (
+                                              <>
+                                                <p className="text-sm text-green-600 flex justify-between">
+                                                  <span>Diskon ({voucherDiscount}%):</span>
+                                                  <span>- {formatRupiah(tier.harga * voucherDiscount / 100)}</span>
+                                                </p>
+                                                <div className="border-t border-gray-300 my-1"></div>
+                                              </>
+                                            )}
+                                          </div>
+                                          <p className="text-sm text-gray-600 flex justify-between font-semibold">
+                                            <span>Total yang harus dibayar:</span>
+                                            <span className="text-emerald-700">
+                                              {formatRupiah(tier.harga - (tier.harga * voucherDiscount / 100))}
+                                            </span>
+                                          </p>
+                                          <p className="text-xs text-gray-500 mt-2">
+                                            Silakan transfer ke rekening yang tersedia dan upload bukti transfer
+                                          </p>
+                                        </>
+                                      )}
+                                      {tier.harga === 0 && (
+                                        <p className="text-lg font-bold text-green-600">Gratis</p>
                                       )}
                                     </div>
                                   );
