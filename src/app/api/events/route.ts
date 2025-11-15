@@ -4,11 +4,15 @@ import { db } from '@/lib/db';
 export async function GET() {
   try {
     const events = await db.event.findMany({
-      where: {
-        statusEvent: 'Pendaftaran'
-      },
       orderBy: {
         createdAt: 'desc'
+      },
+      include: {
+        _count: {
+          select: {
+            pendaftaran: true
+          }
+        }
       }
     });
 
