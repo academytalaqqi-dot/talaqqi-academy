@@ -67,6 +67,7 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
         ...event,
         pemateri: Array.isArray(event.pemateri) ? event.pemateri : JSON.parse(event.pemateri || '[]'),
         waktuEvent: Array.isArray(event.waktuEvent) ? event.waktuEvent : JSON.parse(event.waktuEvent || '[]'),
+        jenisKepesertaan: Array.isArray(event.jenisKepesertaan) ? event.jenisKepesertaan : JSON.parse(event.jenisKepesertaan || '[]'),
         benefit: Array.isArray(event.benefit) ? event.benefit : JSON.parse(event.benefit || '[]'),
         kodeVoucher: Array.isArray(event.kodeVoucher) ? event.kodeVoucher : JSON.parse(event.kodeVoucher || '[]'),
       });
@@ -77,12 +78,10 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
         pemateri: [],
         tema: '',
         waktuEvent: [],
-        jenisKepesertaan: 'Gratis',
-        nominalInfaq: 0,
+        jenisKepesertaan: [],
         benefit: [],
         kodeVoucher: [],
         flyerImage: '',
-        linkGrupWa: '',
         statusEvent: 'Pendaftaran'
       });
     }
