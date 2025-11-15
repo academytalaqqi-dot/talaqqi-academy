@@ -44,6 +44,7 @@ export default function Home() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [registeredTier, setRegisteredTier] = useState<ParticipationTier | null>(null);
 
   useEffect(() => {
     fetchEvents();
@@ -93,6 +94,7 @@ export default function Home() {
 
       if (response.ok) {
         setRegistrationSuccess(true);
+        setRegisteredTier(selectedTierData);
         setFormData({
           namaPendaftar: '',
           kotaDomisili: '',
@@ -188,11 +190,11 @@ export default function Home() {
               return (
                 <Card key={event.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                   {event.flyerImage && (
-                    <div className="w-full h-48 bg-gradient-to-br from-emerald-100 to-yellow-50 flex items-center justify-center">
+                    <div className="w-full h-64 bg-gradient-to-br from-emerald-100 to-yellow-50 flex items-center justify-center overflow-hidden">
                       <img 
                         src={event.flyerImage} 
                         alt={event.namaEvent}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain"
                       />
                     </div>
                   )}
@@ -257,12 +259,57 @@ export default function Home() {
                                 <h3 className="text-xl font-bold text-green-600 mb-2">
                                   Pendaftaran Berhasil!
                                 </h3>
-                                <p className="text-gray-600 mb-4">
-                                  Terima kasih telah mendaftar! Anda akan menerima informasi lebih lanjut via WhatsApp.
-                                </p>
-                                <Button onClick={() => setRegistrationSuccess(false)}>
-                                  Tutup
-                                </Button>
+                                
+                                {registeredTier && registeredTier.harga === 0 ? (
+                                  // Gratis - Langsung ke grup WA
+                                  <>
+                                    <p className="text-gray-600 mb-4">
+                                      Terima kasih telah mendaftar! Silakan bergabung ke grup WhatsApp untuk mengikuti event.
+                                    </p>
+                                    <div className="space-y-2">
+                                      <Button 
+                                        onClick={() => window.open(registeredTier.linkGrupWa, '_blank')}
+                                        className="bg-green-600 hover:bg-green-700 w-full"
+                                      >
+                                        <Phone className="w-4 h-4 mr-2" />
+                                        Gabung Grup WhatsApp
+                                      </Button>
+                                      <Button 
+                                        variant="outline"
+                                        onClick={() => {
+                                          setRegistrationSuccess(false);
+                                          setRegisteredTier(null);
+                                        }}
+                                        className="w-full"
+                                      >
+                                        Tutup
+                                      </Button>
+                                    </div>
+                                  </>
+                                ) : (
+                                  // Berbayar - Tunggu approval
+                                  <>
+                                    <p className="text-gray-600 mb-2">
+                                      Terima kasih telah mendaftar!
+                                    </p>
+                                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                                      <p className="text-sm text-yellow-800">
+                                        <strong>Menunggu Validasi Admin</strong>
+                                      </p>
+                                      <p className="text-xs text-yellow-700 mt-1">
+                                        Pendaftaran Anda sedang divalidasi oleh admin. Link grup WhatsApp akan dikirimkan setelah pembayaran Anda disetujui.
+                                      </p>
+                                    </div>
+                                    <Button 
+                                      onClick={() => {
+                                        setRegistrationSuccess(false);
+                                        setRegisteredTier(null);
+                                      }}
+                                    >
+                                      Tutup
+                                    </Button>
+                                  </>
+                                )}
                               </div>
                             ) : (
                               <form onSubmit={handleSubmit} className="space-y-4">
