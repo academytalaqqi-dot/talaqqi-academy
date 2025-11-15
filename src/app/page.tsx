@@ -49,9 +49,16 @@ export default function Home() {
   const [voucherJenis, setVoucherJenis] = useState<'persen' | 'rupiah'>('persen');
   const [voucherError, setVoucherError] = useState('');
   const [isCheckingVoucher, setIsCheckingVoucher] = useState(false);
+  const [bankInfo, setBankInfo] = useState<{
+    namaLembaga: string;
+    namaBank: string;
+    nomorRekening: string;
+    namaPemilik: string;
+  } | null>(null);
 
   useEffect(() => {
     fetchEvents();
+    fetchBankInfo();
   }, []);
 
   const fetchEvents = async () => {
@@ -61,6 +68,23 @@ export default function Home() {
       setEvents(data);
     } catch (error) {
       console.error('Error fetching events:', error);
+    }
+  };
+
+  const fetchBankInfo = async () => {
+    try {
+      const response = await fetch('/api/referensi');
+      const data = await response.json();
+      if (data && data.length > 0) {
+        setBankInfo({
+          namaLembaga: data[0].namaLembaga,
+          namaBank: data[0].namaBank,
+          nomorRekening: data[0].nomorRekening,
+          namaPemilik: data[0].namaPemilik
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching bank info:', error);
     }
   };
 
@@ -472,6 +496,38 @@ export default function Home() {
                                         </p>
                                       )}
                                     </div>
+
+                                    {/* Bank Info */}
+                                    {bankInfo && (
+                                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                        <h4 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                          </svg>
+                                          Informasi Rekening Transfer
+                                        </h4>
+                                        <div className="space-y-2">
+                                          <div className="flex justify-between items-center">
+                                            <span className="text-sm text-gray-600">Bank:</span>
+                                            <span className="font-semibold text-gray-900">{bankInfo.namaBank}</span>
+                                          </div>
+                                          <div className="flex justify-between items-center">
+                                            <span className="text-sm text-gray-600">No. Rekening:</span>
+                                            <span className="font-bold text-blue-700 text-lg tracking-wide">{bankInfo.nomorRekening}</span>
+                                          </div>
+                                          <div className="flex justify-between items-center">
+                                            <span className="text-sm text-gray-600">Atas Nama:</span>
+                                            <span className="font-semibold text-gray-900">{bankInfo.namaPemilik}</span>
+                                          </div>
+                                          <div className="mt-3 pt-3 border-t border-blue-200">
+                                            <p className="text-xs text-blue-800 italic">
+                                              💡 Silakan transfer sesuai total tagihan di bawah, lalu upload bukti transfer
+                                            </p>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+
                                     <div>
                                       <Label htmlFor="buktiTransfer">Upload Bukti Transfer</Label>
                                       <Input
