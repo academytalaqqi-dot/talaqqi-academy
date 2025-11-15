@@ -325,11 +325,21 @@ export default function Home() {
                         {/* Show all unique benefits from all tiers */}
                         {(() => {
                           const allBenefits = new Set<string>();
+                          
+                          console.log('Tiers list for benefits:', tiersList); // Debug
+                          
                           tiersList.forEach((tier) => {
-                            if (tier.benefit && Array.isArray(tier.benefit)) {
-                              tier.benefit.forEach((b: string) => allBenefits.add(b));
+                            console.log('Tier benefit:', tier.nama, tier.benefit); // Debug
+                            if (tier.benefit && Array.isArray(tier.benefit) && tier.benefit.length > 0) {
+                              tier.benefit.forEach((b: string) => {
+                                if (b && b.trim()) {
+                                  allBenefits.add(b.trim());
+                                }
+                              });
                             }
                           });
+                          
+                          console.log('All benefits collected:', Array.from(allBenefits)); // Debug
                           
                           if (allBenefits.size > 0) {
                             return (
@@ -351,6 +361,8 @@ export default function Home() {
                               </div>
                             );
                           }
+                          
+                          console.log('No benefits found, not rendering box'); // Debug
                           return null;
                         })()}
                         
