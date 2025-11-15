@@ -370,7 +370,7 @@ export default function Home() {
                       </div>
                       
                       {/* Price and Button at bottom */}
-                      <div className="mt-4 pt-4 border-t border-gray-200">
+                      <div className="mt-6 pt-4 border-t border-gray-200">
                         <div className="flex justify-between items-center">
                           <div className="text-xl font-bold text-emerald-700">
                             {minPrice === 0 && maxPrice === 0 ? (
