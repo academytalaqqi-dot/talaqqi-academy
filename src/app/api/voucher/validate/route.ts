@@ -32,10 +32,12 @@ export async function POST(request: NextRequest) {
             if (foundVoucher) {
               // Event-specific voucher found
               let discount = 10; // default
+              let jenisPotongan = 'persen';
               
               if (typeof foundVoucher === 'object' && foundVoucher.potongan) {
                 // New format: use discount from event voucher
                 discount = foundVoucher.potongan;
+                jenisPotongan = foundVoucher.jenisPotongan || 'persen';
               } else {
                 // Old format (string): fallback to global Voucher table
                 const globalVoucher = await db.voucher.findUnique({
@@ -48,7 +50,8 @@ export async function POST(request: NextRequest) {
                 valid: true,
                 voucher: {
                   kodeVoucher: typeof foundVoucher === 'string' ? foundVoucher : foundVoucher.kode,
-                  potongan: discount
+                  potongan: discount,
+                  jenisPotongan: jenisPotongan
                 }
               });
             }

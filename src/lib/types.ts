@@ -18,6 +18,7 @@ export interface EventBenefit {
 export interface VoucherCode {
   kode: string;
   potongan: number;
+  jenisPotongan: 'persen' | 'rupiah';
 }
 
 export interface ParticipationType {

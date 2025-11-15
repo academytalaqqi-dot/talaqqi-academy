@@ -56,6 +56,7 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
   const [newBenefit, setNewBenefit] = useState('');
   const [newVoucherKode, setNewVoucherKode] = useState('');
   const [newVoucherPotongan, setNewVoucherPotongan] = useState(0);
+  const [newVoucherJenis, setNewVoucherJenis] = useState<'persen' | 'rupiah'>('persen');
   const [newTierNama, setNewTierNama] = useState('');
   const [newTierHarga, setNewTierHarga] = useState(0);
   const [newTierLink, setNewTierLink] = useState('');
@@ -106,15 +107,29 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
         };
 
         const parseKodeVoucher = () => {
-          if (Array.isArray(event.kodeVoucher)) return event.kodeVoucher;
+          if (Array.isArray(event.kodeVoucher)) {
+            // Ensure all vouchers have jenisPotongan
+            return event.kodeVoucher.map((v: any) => ({
+              ...v,
+              jenisPotongan: v.jenisPotongan || 'persen'
+            }));
+          }
           if (typeof event.kodeVoucher === 'string') {
             try {
               const parsed = JSON.parse(event.kodeVoucher || '[]');
               // Convert old format (string array) to new format (object array)
               if (parsed.length > 0 && typeof parsed[0] === 'string') {
-                return parsed.map((kode: string) => ({ kode, potongan: 10 }));
+                return parsed.map((kode: string) => ({ 
+                  kode, 
+                  potongan: 10, 
+                  jenisPotongan: 'persen' 
+                }));
               }
-              return parsed;
+              // Ensure jenisPotongan exists
+              return parsed.map((v: any) => ({
+                ...v,
+                jenisPotongan: v.jenisPotongan || 'persen'
+              }));
             } catch {
               return [];
             }
@@ -219,11 +234,13 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
         ...prev,
         kodeVoucher: [...prev.kodeVoucher, {
           kode: newVoucherKode.trim().toUpperCase(),
-          potongan: newVoucherPotongan
+          potongan: newVoucherPotongan,
+          jenisPotongan: newVoucherJenis
         }]
       }));
       setNewVoucherKode('');
       setNewVoucherPotongan(0);
+      setNewVoucherJenis('persen');
     }
   };
 
@@ -546,57 +563,45 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
           </div>
 
           <div>
-            <Label>Benefit</Label>
-            <div className="flex gap-2 mb-2">
-              <Input
-                value={newBenefit}
-                onChange={(e) => setNewBenefit(e.target.value)}
-                placeholder="Benefit yang didapat"
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addBenefit())}
-              />
-              <Button type="button" onClick={addBenefit}>
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {formData.benefit.map((benefit, index) => (
-                <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                  {benefit}
-                  <X 
-                    className="w-3 h-3 cursor-pointer" 
-                    onClick={() => removeBenefit(index)}
-                  />
-                </Badge>
-              ))}
-            </div>
-          </div>
-
-          <div>
             <Label>Kode Voucher (opsional)</Label>
-            <div className="flex gap-2 mb-2">
+            <div className="grid grid-cols-12 gap-2 mb-2">
               <Input
                 value={newVoucherKode}
                 onChange={(e) => setNewVoucherKode(e.target.value)}
                 placeholder="Kode voucher (contoh: DISKON50)"
-                className="flex-1"
+                className="col-span-5"
               />
               <Input
                 type="number"
                 value={newVoucherPotongan}
                 onChange={(e) => setNewVoucherPotongan(parseInt(e.target.value) || 0)}
-                placeholder="Diskon %"
-                className="w-24"
+                placeholder="Nominal"
+                className="col-span-3"
                 min="0"
-                max="100"
               />
-              <Button type="button" onClick={addVoucher}>
+              <Select 
+                value={newVoucherJenis} 
+                onValueChange={(value: 'persen' | 'rupiah') => setNewVoucherJenis(value)}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="persen">%</SelectItem>
+                  <SelectItem value="rupiah">Rupiah</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button type="button" onClick={addVoucher} className="col-span-1">
                 <Plus className="w-4 h-4" />
               </Button>
             </div>
             <div className="flex flex-wrap gap-2">
               {formData.kodeVoucher.map((voucher, index) => (
                 <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                  {typeof voucher === 'string' ? voucher : `${voucher.kode} (${voucher.potongan}%)`}
+                  {typeof voucher === 'string' 
+                    ? voucher 
+                    : `${voucher.kode} (${voucher.jenisPotongan === 'persen' ? voucher.potongan + '%' : 'Rp ' + voucher.potongan.toLocaleString('id-ID')})`
+                  }
                   <X 
                     className="w-3 h-3 cursor-pointer" 
                     onClick={() => removeVoucher(index)}

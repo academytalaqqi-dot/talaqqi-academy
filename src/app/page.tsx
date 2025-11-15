@@ -46,6 +46,7 @@ export default function Home() {
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [registeredTier, setRegisteredTier] = useState<ParticipationTier | null>(null);
   const [voucherDiscount, setVoucherDiscount] = useState(0);
+  const [voucherJenis, setVoucherJenis] = useState<'persen' | 'rupiah'>('persen');
   const [voucherError, setVoucherError] = useState('');
   const [isCheckingVoucher, setIsCheckingVoucher] = useState(false);
 
@@ -78,7 +79,10 @@ export default function Home() {
     setIsSubmitting(true);
     try {
       // Calculate final price with discount
-      const finalPrice = selectedTierData.harga - (selectedTierData.harga * voucherDiscount / 100);
+      const discountAmount = voucherJenis === 'persen' 
+        ? selectedTierData.harga * voucherDiscount / 100
+        : voucherDiscount;
+      const finalPrice = Math.max(0, selectedTierData.harga - discountAmount);
       
       const response = await fetch('/api/pendaftaran', {
         method: 'POST',
@@ -168,10 +172,12 @@ export default function Home() {
 
       if (data.valid) {
         setVoucherDiscount(data.voucher.potongan);
+        setVoucherJenis(data.voucher.jenisPotongan || 'persen');
         setVoucherError('');
       } else {
         setVoucherError(data.error || 'Voucher tidak valid');
         setVoucherDiscount(0);
+        setVoucherJenis('persen');
       }
     } catch (error) {
       console.error('Error checking voucher:', error);
@@ -462,7 +468,7 @@ export default function Home() {
                                       )}
                                       {voucherDiscount > 0 && (
                                         <p className="text-sm text-green-600 mt-1">
-                                          ✓ Voucher valid! Diskon: {voucherDiscount}%
+                                          ✓ Voucher valid! Diskon: {voucherJenis === 'persen' ? voucherDiscount + '%' : formatRupiah(voucherDiscount)}
                                         </p>
                                       )}
                                     </div>
@@ -495,20 +501,30 @@ export default function Home() {
                                               <span>Harga Normal:</span>
                                               <span>{formatRupiah(tier.harga)}</span>
                                             </p>
-                                            {voucherDiscount > 0 && (
-                                              <>
-                                                <p className="text-sm text-green-600 flex justify-between">
-                                                  <span>Diskon ({voucherDiscount}%):</span>
-                                                  <span>- {formatRupiah(tier.harga * voucherDiscount / 100)}</span>
-                                                </p>
-                                                <div className="border-t border-gray-300 my-1"></div>
-                                              </>
-                                            )}
+                                            {voucherDiscount > 0 && (() => {
+                                              const discountAmount = voucherJenis === 'persen' 
+                                                ? tier.harga * voucherDiscount / 100
+                                                : voucherDiscount;
+                                              return (
+                                                <>
+                                                  <p className="text-sm text-green-600 flex justify-between">
+                                                    <span>Diskon ({voucherJenis === 'persen' ? voucherDiscount + '%' : formatRupiah(voucherDiscount)}):</span>
+                                                    <span>- {formatRupiah(discountAmount)}</span>
+                                                  </p>
+                                                  <div className="border-t border-gray-300 my-1"></div>
+                                                </>
+                                              );
+                                            })()}
                                           </div>
                                           <p className="text-sm text-gray-600 flex justify-between font-semibold">
                                             <span>Total yang harus dibayar:</span>
                                             <span className="text-emerald-700">
-                                              {formatRupiah(tier.harga - (tier.harga * voucherDiscount / 100))}
+                                              {(() => {
+                                                const discountAmount = voucherJenis === 'persen' 
+                                                  ? tier.harga * voucherDiscount / 100
+                                                  : voucherDiscount;
+                                                return formatRupiah(Math.max(0, tier.harga - discountAmount));
+                                              })()}
                                             </span>
                                           </p>
                                           <p className="text-xs text-gray-500 mt-2">
