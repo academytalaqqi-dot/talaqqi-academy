@@ -367,9 +367,12 @@ export default function Home() {
                           console.log('No benefits found, not rendering box'); // Debug
                           return null;
                         })()}
-                        
+                      </div>
+                      
+                      {/* Price and Button at bottom */}
+                      <div className="mt-4 pt-4 border-t border-gray-200">
                         <div className="flex justify-between items-center">
-                          <div className="text-lg font-bold text-emerald-700">
+                          <div className="text-xl font-bold text-emerald-700">
                             {minPrice === 0 && maxPrice === 0 ? (
                               <span className="text-green-600">Gratis</span>
                             ) : minPrice === maxPrice ? (
@@ -381,6 +384,7 @@ export default function Home() {
                           <Dialog>
                           <DialogTrigger asChild>
                             <Button 
+                              size="lg"
                               className="bg-emerald-600 hover:bg-emerald-700"
                               onClick={() => setSelectedEvent(event)}
                             >
