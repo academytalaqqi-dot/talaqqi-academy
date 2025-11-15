@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { X, Plus } from 'lucide-react';
+import { X, Plus, Upload, Image as ImageIcon } from 'lucide-react';
 
 interface Event {
   id?: string;
@@ -53,6 +53,8 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
   const [newWaktu, setNewWaktu] = useState('');
   const [newBenefit, setNewBenefit] = useState('');
   const [newVoucher, setNewVoucher] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
 
   useEffect(() => {
     if (event) {
@@ -147,6 +149,40 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
       ...prev,
       kodeVoucher: prev.kodeVoucher.filter((_, i) => i !== index)
     }));
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setUploadError('');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setFormData(prev => ({
+          ...prev,
+          flyerImage: data.url
+        }));
+      } else {
+        setUploadError(data.error || 'Upload gagal');
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      setUploadError('Terjadi kesalahan saat upload');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -327,25 +363,75 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="flyerImage">URL Flyer Image</Label>
+          <div>
+            <Label>Flyer Image</Label>
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  disabled={isUploading}
+                  className="flex-1"
+                />
+                <Button 
+                  type="button" 
+                  variant="outline"
+                  disabled={isUploading}
+                  onClick={() => document.getElementById('fileInput')?.click()}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  {isUploading ? 'Uploading...' : 'Upload'}
+                </Button>
+              </div>
+              
+              {uploadError && (
+                <p className="text-sm text-red-600">{uploadError}</p>
+              )}
+              
+              {formData.flyerImage && (
+                <div className="relative border rounded-lg p-2 bg-gray-50">
+                  <div className="flex items-center gap-3">
+                    <ImageIcon className="w-8 h-8 text-gray-400" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900">Preview:</p>
+                      <img 
+                        src={formData.flyerImage} 
+                        alt="Flyer preview" 
+                        className="mt-2 max-w-full max-h-48 rounded object-contain"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setFormData({...formData, flyerImage: ''})}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+              
+              <div className="text-xs text-gray-500">
+                Atau masukkan URL gambar:
+              </div>
               <Input
-                id="flyerImage"
                 value={formData.flyerImage}
                 onChange={(e) => setFormData({...formData, flyerImage: e.target.value})}
                 placeholder="https://example.com/image.jpg"
               />
             </div>
-            <div>
-              <Label htmlFor="linkGrupWa">Link Grup WhatsApp</Label>
-              <Input
-                id="linkGrupWa"
-                value={formData.linkGrupWa}
-                onChange={(e) => setFormData({...formData, linkGrupWa: e.target.value})}
-                placeholder="https://chat.whatsapp.com/..."
-              />
-            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="linkGrupWa">Link Grup WhatsApp</Label>
+            <Input
+              id="linkGrupWa"
+              value={formData.linkGrupWa}
+              onChange={(e) => setFormData({...formData, linkGrupWa: e.target.value})}
+              placeholder="https://chat.whatsapp.com/..."
+            />
           </div>
 
           <div>
