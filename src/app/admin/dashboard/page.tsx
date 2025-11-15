@@ -156,6 +156,35 @@ export default function AdminDashboard() {
       });
 
       if (response.ok) {
+        const result = await response.json();
+        
+        // If approved and paid tier, send WhatsApp message
+        if (action === 'approve' && result.nominalPembayaran > 0) {
+          const registration = pendaftaran.find(p => p.id === id);
+          if (registration) {
+            // Parse event tiers to get WhatsApp link
+            const tiers = JSON.parse(registration.event.jenisKepesertaan || '[]');
+            const selectedTier = tiers.find((t: any) => t.nama === registration.jenisKepesertaan);
+            
+            if (selectedTier && selectedTier.linkGrupWa) {
+              // Create WhatsApp message
+              const message = encodeURIComponent(
+                `Halo ${registration.namaPendaftar}! 🎉\n\n` +
+                `Selamat! Pendaftaran Anda untuk event "${registration.event.namaEvent}" telah disetujui.\n\n` +
+                `Silakan bergabung ke grup WhatsApp melalui link berikut:\n` +
+                `${selectedTier.linkGrupWa}\n\n` +
+                `Terima kasih telah mendaftar di Talaqqi Academy!`
+              );
+              
+              // Open WhatsApp with pre-filled message
+              const whatsappUrl = `https://wa.me/${registration.noWhatsapp.replace(/\D/g, '')}?text=${message}`;
+              window.open(whatsappUrl, '_blank');
+              
+              alert('Status berhasil diupdate! Link WhatsApp telah dibuka di tab baru untuk dikirim ke peserta.');
+            }
+          }
+        }
+        
         fetchData();
       } else {
         alert('Gagal memperbarui status');

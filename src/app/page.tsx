@@ -104,6 +104,24 @@ export default function Home() {
           kodeVoucher: '',
           buktiTransfer: ''
         });
+        
+        // Auto close after showing success message
+        if (selectedTierData.harga === 0) {
+          // For free tier, open WhatsApp then close after 3 seconds
+          window.open(selectedTierData.linkGrupWa, '_blank');
+          setTimeout(() => {
+            setSelectedEvent(null);
+            setRegistrationSuccess(false);
+            setRegisteredTier(null);
+          }, 3000);
+        } else {
+          // For paid tier, close after 5 seconds
+          setTimeout(() => {
+            setSelectedEvent(null);
+            setRegistrationSuccess(false);
+            setRegisteredTier(null);
+          }, 5000);
+        }
       } else {
         alert('Gagal mendaftar, silakan coba lagi');
       }
@@ -264,27 +282,11 @@ export default function Home() {
                                   // Gratis - Langsung ke grup WA
                                   <>
                                     <p className="text-gray-600 mb-4">
-                                      Terima kasih telah mendaftar! Silakan bergabung ke grup WhatsApp untuk mengikuti event.
+                                      Terima kasih telah mendaftar! Link grup WhatsApp telah dibuka di tab baru.
                                     </p>
-                                    <div className="space-y-2">
-                                      <Button 
-                                        onClick={() => window.open(registeredTier.linkGrupWa, '_blank')}
-                                        className="bg-green-600 hover:bg-green-700 w-full"
-                                      >
-                                        <Phone className="w-4 h-4 mr-2" />
-                                        Gabung Grup WhatsApp
-                                      </Button>
-                                      <Button 
-                                        variant="outline"
-                                        onClick={() => {
-                                          setRegistrationSuccess(false);
-                                          setRegisteredTier(null);
-                                        }}
-                                        className="w-full"
-                                      >
-                                        Tutup
-                                      </Button>
-                                    </div>
+                                    <p className="text-sm text-gray-500 mb-4">
+                                      Form akan tertutup otomatis dalam beberapa detik...
+                                    </p>
                                   </>
                                 ) : (
                                   // Berbayar - Tunggu approval
@@ -297,17 +299,12 @@ export default function Home() {
                                         <strong>Menunggu Validasi Admin</strong>
                                       </p>
                                       <p className="text-xs text-yellow-700 mt-1">
-                                        Pendaftaran Anda sedang divalidasi oleh admin. Link grup WhatsApp akan dikirimkan setelah pembayaran Anda disetujui.
+                                        Pendaftaran Anda sedang divalidasi oleh admin. Link grup WhatsApp akan dikirimkan via WhatsApp setelah pembayaran Anda disetujui.
                                       </p>
                                     </div>
-                                    <Button 
-                                      onClick={() => {
-                                        setRegistrationSuccess(false);
-                                        setRegisteredTier(null);
-                                      }}
-                                    >
-                                      Tutup
-                                    </Button>
+                                    <p className="text-sm text-gray-500 mb-4">
+                                      Form akan tertutup otomatis dalam beberapa detik...
+                                    </p>
                                   </>
                                 )}
                               </div>
