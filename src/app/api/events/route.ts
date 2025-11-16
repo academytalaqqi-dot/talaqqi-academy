@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     console.log('Sponsor:', JSON.stringify(data.sponsor, null, 2));
     
     // Prepare pertanyaanTambahan
-    let pertanyaanTambahanToSave = null;
+    let pertanyaanTambahanToSave: string | null = null;
     if (data.pertanyaanTambahan && Array.isArray(data.pertanyaanTambahan) && data.pertanyaanTambahan.length > 0) {
       pertanyaanTambahanToSave = JSON.stringify(data.pertanyaanTambahan);
       console.log('PertanyaanTambahan will be saved:', pertanyaanTambahanToSave);
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Prepare sponsor
-    let sponsorToSave = null;
+    let sponsorToSave: string | null = null;
     if (data.sponsor && Array.isArray(data.sponsor) && data.sponsor.length > 0) {
       sponsorToSave = JSON.stringify(data.sponsor);
       console.log('Sponsor will be saved:', sponsorToSave);

@@ -60,7 +60,7 @@ interface EventFormDialogProps {
 }
 
 export function EventFormDialog({ open, onOpenChange, event, onSave }: EventFormDialogProps) {
-  const [formData, setFormData] = useState<Event>({
+  const [formData, setFormData] = useState<any>({
     kodeEvent: '',
     namaEvent: '',
     pemateri: [],
@@ -144,7 +144,7 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
         const parseJenisKepesertaan = () => {
           if (Array.isArray(event.jenisKepesertaan)) {
             // Ensure all tiers have benefit array
-            return event.jenisKepesertaan.map(tier => ({
+            return (event.jenisKepesertaan as any[]).map((tier: any) => ({
               ...tier,
               benefit: tier.benefit || []
             }));
@@ -152,7 +152,7 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
           if (typeof event.jenisKepesertaan === 'string') {
             const parsed = JSON.parse(event.jenisKepesertaan || '[]');
             if (Array.isArray(parsed)) {
-              return parsed.map(tier => ({
+              return parsed.map((tier: any) => ({
                 ...tier,
                 benefit: tier.benefit || []
               }));
