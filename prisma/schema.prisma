@@ -28,10 +28,13 @@ model Event {
   namaEvent           String
   pemateri            String   // JSON array of speakers
   tema                String
+  deskripsi           String?  // Rich text description (HTML)
   waktuEvent          String   // JSON array of dates and times
   jenisKepesertaan    String   // JSON array of participation types with price and WA link
   benefit             String   // JSON array of benefits
   kodeVoucher         String?  // JSON array of voucher codes
+  pertanyaanTambahan  String?  // JSON array of additional questions for registration
+  sponsor             String?  // JSON array of event sponsors
   flyerImage          String?
   statusEvent         String   @default("Pendaftaran") // "Pendaftaran", "Berjalan", "Selesai"
   createdAt           DateTime @default(now())
@@ -51,6 +54,7 @@ model Pendaftaran {
   nominalPembayaran Int
   kodeVoucher       String?
   buktiTransfer     String?
+  jawabanTambahan   String?  // JSON object of additional answers
   waktuPendaftaran  DateTime @default(now())
   status            String   @default("Pending") // "Pending", "Approved", "Rejected"
   
@@ -65,6 +69,12 @@ model Referensi {
   namaPemilik       String
   noWhatsappAdmin   String
   logo              String?
+  instagram         String?
+  telegram          String?
+  whatsappChannel   String?
+  facebook          String?
+  threads           String?
+  youtube           String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 }
@@ -76,4 +86,12 @@ model Voucher {
   status      String   @default("Aktif") // "Aktif", "Tidak Aktif"
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Settings {
+  id                    String   @id @default(cuid())
+  themeColor            String   @default("emerald") // "emerald", "blue", "purple", "red", "orange"
+  landingPageRedaction  String?  // HTML or rich text for landing page
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 }

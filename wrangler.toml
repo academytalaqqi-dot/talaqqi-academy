@@ -1,0 +1,14 @@
+name = "talaqqi-academy"
+main = "src/index.ts"
+compatibility_date = "2025-11-16"
+pages_build_output_dir = ".next/static"
+
+# Environment configuration
+[env.production]
+vars = { ENVIRONMENT = "production" }
+
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "talaqqi-academy-db"
+database_id = "ed56f499-4d58-46be-9756-6682c35de216"

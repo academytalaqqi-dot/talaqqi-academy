@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { X, Plus, Upload, Image as ImageIcon } from 'lucide-react';
 
 interface ParticipationTier {
@@ -16,16 +17,37 @@ interface ParticipationTier {
   linkGrupWa: string;
 }
 
+interface WaktuEvent {
+  hari: string;
+  tanggal: string;
+  jam: string;
+}
+
+interface PertanyaanTambahan {
+  pertanyaan: string;
+  tipeJawaban: 'text' | 'pilihan';
+  opsiPilihan?: string[];
+}
+
+interface Sponsor {
+  namaSponsor: string;
+  logoSponsor: string;
+  linkWebSponsor: string;
+}
+
 interface Event {
   id?: string;
   kodeEvent: string;
   namaEvent: string;
   pemateri: string[];
   tema: string;
-  waktuEvent: string[];
+  deskripsi?: string;
+  waktuEvent: WaktuEvent[];
   jenisKepesertaan: ParticipationTier[];
   benefit: string[];
   kodeVoucher: string[];
+  pertanyaanTambahan?: PertanyaanTambahan[];
+  sponsor?: Sponsor[];
   flyerImage: string;
   statusEvent: string;
 }
@@ -43,16 +65,21 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
     namaEvent: '',
     pemateri: [],
     tema: '',
+    deskripsi: '',
     waktuEvent: [],
     jenisKepesertaan: [],
     benefit: [],
     kodeVoucher: [],
+    pertanyaanTambahan: [],
+    sponsor: [],
     flyerImage: '',
     statusEvent: 'Pendaftaran'
   });
 
   const [newPemateri, setNewPemateri] = useState('');
-  const [newWaktu, setNewWaktu] = useState('');
+  const [newWaktuHari, setNewWaktuHari] = useState('');
+  const [newWaktuTanggal, setNewWaktuTanggal] = useState('');
+  const [newWaktuJam, setNewWaktuJam] = useState('');
   const [newBenefit, setNewBenefit] = useState('');
   const [newVoucherKode, setNewVoucherKode] = useState('');
   const [newVoucherPotongan, setNewVoucherPotongan] = useState(0);
@@ -64,6 +91,19 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
   const [editingTierIndex, setEditingTierIndex] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  
+  // State for Pertanyaan Tambahan
+  const [newPertanyaan, setNewPertanyaan] = useState('');
+  const [newTipeJawaban, setNewTipeJawaban] = useState<'text' | 'pilihan'>('text');
+  const [newOpsiPilihan, setNewOpsiPilihan] = useState('');
+  const [tempOpsiList, setTempOpsiList] = useState<string[]>([]);
+  
+  // State for Sponsor
+  const [newSponsorNama, setNewSponsorNama] = useState('');
+  const [newSponsorLogo, setNewSponsorLogo] = useState('');
+  const [newSponsorLink, setNewSponsorLink] = useState('');
+  const [isUploadingSponsorLogo, setIsUploadingSponsorLogo] = useState(false);
+  const [sponsorLogoError, setSponsorLogoError] = useState('');
 
   useEffect(() => {
     if (event) {
@@ -75,8 +115,29 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
         };
 
         const parseWaktuEvent = () => {
-          if (Array.isArray(event.waktuEvent)) return event.waktuEvent;
-          if (typeof event.waktuEvent === 'string') return JSON.parse(event.waktuEvent || '[]');
+          if (Array.isArray(event.waktuEvent)) {
+            // Check if it's already in new format
+            if (event.waktuEvent.length > 0 && typeof event.waktuEvent[0] === 'object' && 'hari' in event.waktuEvent[0]) {
+              return event.waktuEvent;
+            }
+            // Convert old format (string array) to new format
+            return event.waktuEvent.map((waktu: any) => ({
+              hari: '',
+              tanggal: typeof waktu === 'string' ? waktu : '',
+              jam: ''
+            }));
+          }
+          if (typeof event.waktuEvent === 'string') {
+            const parsed = JSON.parse(event.waktuEvent || '[]');
+            if (parsed.length > 0 && typeof parsed[0] === 'object' && 'hari' in parsed[0]) {
+              return parsed;
+            }
+            return parsed.map((waktu: string) => ({
+              hari: '',
+              tanggal: waktu,
+              jam: ''
+            }));
+          }
           return [];
         };
 
@@ -137,6 +198,18 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
           return [];
         };
 
+        const parsePertanyaanTambahan = () => {
+          if (Array.isArray(event.pertanyaanTambahan)) return event.pertanyaanTambahan;
+          if (typeof event.pertanyaanTambahan === 'string') return JSON.parse(event.pertanyaanTambahan || '[]');
+          return [];
+        };
+
+        const parseSponsor = () => {
+          if (Array.isArray(event.sponsor)) return event.sponsor;
+          if (typeof event.sponsor === 'string') return JSON.parse(event.sponsor || '[]');
+          return [];
+        };
+
         setFormData({
           ...event,
           pemateri: parsePemateri(),
@@ -144,6 +217,8 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
           jenisKepesertaan: parseJenisKepesertaan(),
           benefit: parseBenefit(),
           kodeVoucher: parseKodeVoucher(),
+          pertanyaanTambahan: parsePertanyaanTambahan(),
+          sponsor: parseSponsor(),
         });
       } catch (error) {
         console.error('Error parsing event data:', error);
@@ -153,10 +228,13 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
           namaEvent: '',
           pemateri: [],
           tema: '',
+          deskripsi: '',
           waktuEvent: [],
           jenisKepesertaan: [],
           benefit: [],
           kodeVoucher: [],
+          pertanyaanTambahan: [],
+          sponsor: [],
           flyerImage: '',
           statusEvent: 'Pendaftaran'
         });
@@ -167,10 +245,13 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
         namaEvent: '',
         pemateri: [],
         tema: '',
+        deskripsi: '',
         waktuEvent: [],
         jenisKepesertaan: [],
         benefit: [],
         kodeVoucher: [],
+        pertanyaanTambahan: [],
+        sponsor: [],
         flyerImage: '',
         statusEvent: 'Pendaftaran'
       });
@@ -195,12 +276,18 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
   };
 
   const addWaktu = () => {
-    if (newWaktu.trim()) {
+    if (newWaktuHari.trim() || newWaktuTanggal.trim() || newWaktuJam.trim()) {
       setFormData(prev => ({
         ...prev,
-        waktuEvent: [...prev.waktuEvent, newWaktu.trim()]
+        waktuEvent: [...prev.waktuEvent, {
+          hari: newWaktuHari.trim(),
+          tanggal: newWaktuTanggal.trim(),
+          jam: newWaktuJam.trim()
+        }]
       }));
-      setNewWaktu('');
+      setNewWaktuHari('');
+      setNewWaktuTanggal('');
+      setNewWaktuJam('');
     }
   };
 
@@ -315,6 +402,87 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
     }));
   };
 
+  // Pertanyaan Tambahan functions
+  const addOpsiPilihan = () => {
+    if (newOpsiPilihan.trim()) {
+      setTempOpsiList(prev => [...prev, newOpsiPilihan.trim()]);
+      setNewOpsiPilihan('');
+    }
+  };
+
+  const removeOpsiPilihan = (index: number) => {
+    setTempOpsiList(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const addPertanyaan = () => {
+    console.log('addPertanyaan called!');
+    console.log('newPertanyaan:', newPertanyaan);
+    console.log('newTipeJawaban:', newTipeJawaban);
+    console.log('tempOpsiList:', tempOpsiList);
+    
+    if (newPertanyaan.trim()) {
+      const newQ: PertanyaanTambahan = {
+        pertanyaan: newPertanyaan.trim(),
+        tipeJawaban: newTipeJawaban,
+        opsiPilihan: newTipeJawaban === 'pilihan' ? [...tempOpsiList] : undefined
+      };
+      
+      console.log('Adding pertanyaan:', newQ);
+      
+      setFormData(prev => {
+        console.log('Previous pertanyaanTambahan:', prev.pertanyaanTambahan);
+        const updated = {
+          ...prev,
+          pertanyaanTambahan: [...(prev.pertanyaanTambahan || []), newQ]
+        };
+        console.log('Updated formData pertanyaanTambahan:', updated.pertanyaanTambahan);
+        return updated;
+      });
+      
+      setNewPertanyaan('');
+      setNewTipeJawaban('text');
+      setTempOpsiList([]);
+      
+      console.log('Pertanyaan added successfully!');
+    } else {
+      console.log('Pertanyaan is empty, not adding');
+    }
+  };
+
+  const removePertanyaan = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      pertanyaanTambahan: prev.pertanyaanTambahan?.filter((_, i) => i !== index)
+    }));
+  };
+
+  // Sponsor functions
+  const addSponsor = () => {
+    if (newSponsorNama.trim()) {
+      const newS: Sponsor = {
+        namaSponsor: newSponsorNama.trim(),
+        logoSponsor: newSponsorLogo.trim(),
+        linkWebSponsor: newSponsorLink.trim()
+      };
+      
+      setFormData(prev => ({
+        ...prev,
+        sponsor: [...(prev.sponsor || []), newS]
+      }));
+      
+      setNewSponsorNama('');
+      setNewSponsorLogo('');
+      setNewSponsorLink('');
+    }
+  };
+
+  const removeSponsor = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      sponsor: prev.sponsor?.filter((_, i) => i !== index)
+    }));
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -349,6 +517,37 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
     }
   };
 
+  const handleSponsorLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingSponsorLogo(true);
+    setSponsorLogoError('');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setNewSponsorLogo(data.url);
+      } else {
+        setSponsorLogoError(data.error || 'Upload gagal');
+      }
+    } catch (error) {
+      console.error('Error uploading sponsor logo:', error);
+      setSponsorLogoError('Terjadi kesalahan saat upload');
+    } finally {
+      setIsUploadingSponsorLogo(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -357,6 +556,10 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
       alert('Tambahkan minimal 1 jenis kepesertaan (tier)');
       return;
     }
+    
+    console.log('Form data before save:', formData);
+    console.log('PertanyaanTambahan before save:', formData.pertanyaanTambahan);
+    console.log('Sponsor before save:', formData.sponsor);
     
     onSave(formData);
   };
@@ -403,6 +606,15 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
           </div>
 
           <div>
+            <Label>Deskripsi Event</Label>
+            <RichTextEditor
+              content={formData.deskripsi || ''}
+              onChange={(content) => setFormData({...formData, deskripsi: content})}
+              placeholder="Tulis deskripsi detail tentang event..."
+            />
+          </div>
+
+          <div>
             <Label>Pemateri</Label>
             <div className="flex gap-2 mb-2">
               <Input
@@ -419,10 +631,16 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
               {formData.pemateri.map((pemateri, index) => (
                 <Badge key={index} variant="secondary" className="flex items-center gap-1">
                   {pemateri}
-                  <X 
-                    className="w-3 h-3 cursor-pointer" 
-                    onClick={() => removePemateri(index)}
-                  />
+                  <button 
+                    type="button"
+                    className="ml-1 hover:bg-gray-300 rounded-full p-0.5" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      removePemateri(index);
+                    }}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
                 </Badge>
               ))}
             </div>
@@ -430,25 +648,47 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
 
           <div>
             <Label>Waktu Event</Label>
-            <div className="flex gap-2 mb-2">
-              <Input
-                value={newWaktu}
-                onChange={(e) => setNewWaktu(e.target.value)}
-                placeholder="Contoh: 2024-01-15 19:00"
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addWaktu())}
-              />
-              <Button type="button" onClick={addWaktu}>
-                <Plus className="w-4 h-4" />
-              </Button>
+            <div className="space-y-2 mb-2">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                <Input
+                  value={newWaktuHari}
+                  onChange={(e) => setNewWaktuHari(e.target.value)}
+                  placeholder="Hari (contoh: Senin)"
+                />
+                <Input
+                  value={newWaktuTanggal}
+                  onChange={(e) => setNewWaktuTanggal(e.target.value)}
+                  placeholder="Tanggal (contoh: 15 Januari 2024)"
+                />
+                <Input
+                  value={newWaktuJam}
+                  onChange={(e) => setNewWaktuJam(e.target.value)}
+                  placeholder="Jam (contoh: 19:00 - 21:00)"
+                />
+                <Button type="button" onClick={addWaktu} className="w-full">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Tambah
+                </Button>
+              </div>
             </div>
             <div className="flex flex-wrap gap-2">
               {formData.waktuEvent.map((waktu, index) => (
-                <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                  {waktu}
-                  <X 
-                    className="w-3 h-3 cursor-pointer" 
-                    onClick={() => removeWaktu(index)}
-                  />
+                <Badge key={index} variant="secondary" className="flex items-center gap-1 py-2 px-3">
+                  <div className="flex flex-col text-left">
+                    {waktu.hari && <span className="font-semibold">{waktu.hari}</span>}
+                    {waktu.tanggal && <span className="text-xs">{waktu.tanggal}</span>}
+                    {waktu.jam && <span className="text-xs">{waktu.jam}</span>}
+                  </div>
+                  <button 
+                    type="button"
+                    className="ml-2 hover:bg-gray-300 rounded-full p-0.5" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      removeWaktu(index);
+                    }}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
                 </Badge>
               ))}
             </div>
@@ -540,10 +780,16 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
                         {(tier.benefit || []).map((benefit, bIdx) => (
                           <Badge key={bIdx} variant="outline" className="text-xs flex items-center gap-1">
                             {benefit}
-                            <X 
-                              className="w-3 h-3 cursor-pointer" 
-                              onClick={() => removeBenefitFromTier(index, bIdx)}
-                            />
+                            <button 
+                              type="button"
+                              className="ml-1 hover:bg-gray-300 rounded-full p-0.5" 
+                              onClick={(e) => {
+                                e.preventDefault();
+                                removeBenefitFromTier(index, bIdx);
+                              }}
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
                           </Badge>
                         ))}
                         {(!tier.benefit || tier.benefit.length === 0) && (
@@ -602,10 +848,16 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
                     ? voucher 
                     : `${voucher.kode} (${voucher.jenisPotongan === 'persen' ? voucher.potongan + '%' : 'Rp ' + voucher.potongan.toLocaleString('id-ID')})`
                   }
-                  <X 
-                    className="w-3 h-3 cursor-pointer" 
-                    onClick={() => removeVoucher(index)}
-                  />
+                  <button 
+                    type="button"
+                    className="ml-1 hover:bg-gray-300 rounded-full p-0.5" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      removeVoucher(index);
+                    }}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
                 </Badge>
               ))}
             </div>
@@ -669,6 +921,230 @@ export function EventFormDialog({ open, onOpenChange, event, onSave }: EventForm
                 onChange={(e) => setFormData({...formData, flyerImage: e.target.value})}
                 placeholder="https://example.com/image.jpg"
               />
+            </div>
+          </div>
+
+          <div>
+            <Label>Pertanyaan Tambahan untuk Pendaftaran (opsional)</Label>
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 gap-2">
+                <Input
+                  value={newPertanyaan}
+                  onChange={(e) => setNewPertanyaan(e.target.value)}
+                  placeholder="Tulis pertanyaan (contoh: Apa motivasi Anda?)"
+                />
+                <div className="flex gap-2 items-center">
+                  <Label className="text-sm">Tipe Jawaban:</Label>
+                  <Select 
+                    value={newTipeJawaban} 
+                    onValueChange={(value: 'text' | 'pilihan') => {
+                      setNewTipeJawaban(value);
+                      if (value === 'text') {
+                        setTempOpsiList([]);
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="w-40">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="text">Free Text</SelectItem>
+                      <SelectItem value="pilihan">Pilihan</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {newTipeJawaban === 'pilihan' && (
+                  <div className="ml-4 space-y-2 p-3 bg-gray-50 rounded border">
+                    <Label className="text-xs">Opsi Pilihan:</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={newOpsiPilihan}
+                        onChange={(e) => setNewOpsiPilihan(e.target.value)}
+                        placeholder="Tambah opsi pilihan"
+                        className="text-sm"
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            addOpsiPilihan();
+                          }
+                        }}
+                      />
+                      <Button type="button" size="sm" onClick={addOpsiPilihan}>
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {tempOpsiList.map((opsi, idx) => (
+                        <Badge key={idx} variant="outline" className="text-xs flex items-center gap-1">
+                          {opsi}
+                          <button 
+                            type="button"
+                            className="ml-1 hover:bg-gray-300 rounded-full p-0.5" 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              removeOpsiPilihan(idx);
+                            }}
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <Button type="button" onClick={addPertanyaan} className="w-full">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Tambah Pertanyaan
+                </Button>
+              </div>
+              
+              <div className="space-y-2">
+                {(formData.pertanyaanTambahan || []).map((q, index) => (
+                  <div key={index} className="p-3 bg-gray-50 rounded-lg border">
+                    <div className="flex items-start gap-2">
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{q.pertanyaan}</p>
+                        <Badge variant="outline" className="text-xs mt-1">
+                          {q.tipeJawaban === 'text' ? 'Free Text' : 'Pilihan'}
+                        </Badge>
+                        {q.tipeJawaban === 'pilihan' && q.opsiPilihan && (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {q.opsiPilihan.map((opsi, oIdx) => (
+                              <Badge key={oIdx} variant="secondary" className="text-xs">
+                                {opsi}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removePertanyaan(index)}
+                      >
+                        <X className="w-4 h-4 text-red-600" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <Label>Sponsor Event (opsional)</Label>
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <Input
+                  value={newSponsorNama}
+                  onChange={(e) => setNewSponsorNama(e.target.value)}
+                  placeholder="Nama Sponsor"
+                />
+                
+                <div>
+                  <Label className="text-xs text-gray-600">Logo Sponsor</Label>
+                  <div className="flex gap-2 mt-1">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleSponsorLogoUpload}
+                      disabled={isUploadingSponsorLogo}
+                      className="flex-1"
+                    />
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      disabled={isUploadingSponsorLogo}
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      {isUploadingSponsorLogo ? 'Uploading...' : 'Upload'}
+                    </Button>
+                  </div>
+                  {sponsorLogoError && (
+                    <p className="text-xs text-red-600 mt-1">{sponsorLogoError}</p>
+                  )}
+                  {newSponsorLogo && (
+                    <div className="mt-2 p-2 bg-gray-50 rounded border flex items-center gap-2">
+                      <img 
+                        src={newSponsorLogo} 
+                        alt="Logo preview" 
+                        className="h-12 w-12 object-contain"
+                      />
+                      <span className="text-xs text-gray-600 flex-1 truncate">{newSponsorLogo}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setNewSponsorLogo('')}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
+                  <div className="text-xs text-gray-500 mt-1">
+                    Atau masukkan URL logo:
+                  </div>
+                  <Input
+                    value={newSponsorLogo}
+                    onChange={(e) => setNewSponsorLogo(e.target.value)}
+                    placeholder="https://example.com/logo.png"
+                    className="mt-1"
+                  />
+                </div>
+                
+                <div className="flex gap-2">
+                  <Input
+                    value={newSponsorLink}
+                    onChange={(e) => setNewSponsorLink(e.target.value)}
+                    placeholder="Link Website Sponsor"
+                    className="flex-1"
+                  />
+                  <Button type="button" onClick={addSponsor}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Tambah
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {(formData.sponsor || []).map((sponsor, index) => (
+                  <div key={index} className="p-3 bg-gray-50 rounded-lg border">
+                    <div className="flex items-center gap-3">
+                      {sponsor.logoSponsor && (
+                        <img 
+                          src={sponsor.logoSponsor} 
+                          alt={sponsor.namaSponsor}
+                          className="w-12 h-12 object-contain rounded"
+                        />
+                      )}
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{sponsor.namaSponsor}</p>
+                        {sponsor.linkWebSponsor && (
+                          <a 
+                            href={sponsor.linkWebSponsor}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-blue-600 hover:underline truncate block"
+                          >
+                            {sponsor.linkWebSponsor}
+                          </a>
+                        )}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeSponsor(index)}
+                      >
+                        <X className="w-4 h-4 text-red-600" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 

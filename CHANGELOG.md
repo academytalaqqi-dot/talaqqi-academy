@@ -6,6 +6,34 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+#### 📊 Registration Validation Enhancements
+- **Search & Filter System** - Comprehensive search and filtering on Validasi Pendaftaran tab
+  - Multi-field search: nama, kota, WhatsApp, nama event
+  - Status filter: Pending, Approved, Rejected
+  - Jenis Kepesertaan filter: Gratis, Berbayar
+  - Real-time filtering with result counter
+  - Responsive grid layout (1 column mobile, 3 columns desktop)
+- **Detail Modal Improvements** - Display questions alongside answers
+  - Show actual pertanyaan text from event (not generic "Pertanyaan 1, 2...")
+  - Parse and match questions with answers by index
+  - Styled Q&A display with green border and white answer boxes
+  - Error handling for invalid JSON data
+- **Export Functionality** - Export filtered data to Excel and PDF
+  - Export to Excel (.xlsx) with formatted columns
+  - Export to PDF (.pdf) with professional layout
+  - Automatic filename with export date
+  - Respects applied filters (exports only filtered data)
+  - Two-button interface (Excel & PDF export)
+  - Automatic column width optimization
+  - Professional styling with colored headers
+
+#### 🎨 Form UI Improvements
+- **Yellow Event Info Header** - Event details now display with attractive yellow gradient background
+- **Link Detection & Auto-Hyperlink** - URLs in question answers automatically become clickable hyperlinks
+- **Enhanced Visual Hierarchy** - Better distinction between form sections with color-coded backgrounds
+- **Mobile-Responsive Layout** - Event info header adapts to mobile screens (1 column) and desktop (2 columns)
+- **Improved UX** - Placeholder text indicates that links can be used in answers
+
 #### 🎨 Flexible Participation Tiers System
 - **Multiple tier support** - Create unlimited participation types per event
 - **Custom pricing** - Set different prices for each tier (e.g., Pelajar, Regular, VIP)
@@ -26,6 +54,8 @@ All notable changes to this project will be documented in this file.
 - **SETUP.md** - Complete installation and setup guide
 - **UPLOAD_GUIDE.md** - Image upload feature documentation
 - **PARTICIPATION_TIERS.md** - Comprehensive tiers system guide
+- **SEARCH_FILTER_GUIDE.md** - Search and filter system documentation
+- **EXPORT_GUIDE.md** - Export to Excel and PDF feature documentation
 - **CHANGELOG.md** - This file
 
 ### Changed
@@ -129,8 +159,13 @@ All notable changes to this project will be documented in this file.
 
 ### Dependencies
 
-#### No New Dependencies Added
-All features built with existing packages:
+#### New Dependencies Added
+- `xlsx` (^0.18.x) - Excel file generation and manipulation
+- `jspdf` (^2.5.x) - PDF document generation
+- `jspdf-autotable` (^3.5.x) - Automatic table generation for jsPDF
+
+#### Existing Packages
+All other features built with existing packages:
 - Next.js 15.3.5
 - Prisma 6.11.1
 - React 19.0.0

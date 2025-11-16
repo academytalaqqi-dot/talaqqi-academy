@@ -12,7 +12,13 @@ export async function GET() {
         namaBank: '',
         namaPemilik: '',
         noWhatsappAdmin: '',
-        logo: ''
+        logo: '',
+        instagram: '',
+        telegram: '',
+        whatsappChannel: '',
+        facebook: '',
+        threads: '',
+        youtube: ''
       });
     }
 
@@ -41,7 +47,13 @@ export async function POST(request: NextRequest) {
           namaBank: data.namaBank,
           namaPemilik: data.namaPemilik,
           noWhatsappAdmin: data.noWhatsappAdmin,
-          logo: data.logo
+          logo: data.logo,
+          instagram: data.instagram,
+          telegram: data.telegram,
+          whatsappChannel: data.whatsappChannel,
+          facebook: data.facebook,
+          threads: data.threads,
+          youtube: data.youtube
         }
       });
     } else {
@@ -53,7 +65,13 @@ export async function POST(request: NextRequest) {
           namaBank: data.namaBank,
           namaPemilik: data.namaPemilik,
           noWhatsappAdmin: data.noWhatsappAdmin,
-          logo: data.logo
+          logo: data.logo,
+          instagram: data.instagram,
+          telegram: data.telegram,
+          whatsappChannel: data.whatsappChannel,
+          facebook: data.facebook,
+          threads: data.threads,
+          youtube: data.youtube
         }
       });
     }

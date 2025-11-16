@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,28 @@ export default function AdminLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [namaLembaga, setNamaLembaga] = useState('Talaqqi Academy');
+  const [logoLembaga, setLogoLembaga] = useState('');
   const router = useRouter();
+
+  useEffect(() => {
+    fetchReferensi();
+  }, []);
+
+  const fetchReferensi = async () => {
+    try {
+      const response = await fetch('/api/referensi');
+      const data = await response.json();
+      if (data.namaLembaga) {
+        setNamaLembaga(data.namaLembaga);
+      }
+      if (data.logo) {
+        setLogoLembaga(data.logo);
+      }
+    } catch (error) {
+      console.error('Error fetching referensi:', error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,10 +76,16 @@ export default function AdminLogin() {
       <div className="w-full max-w-md">
         {/* Logo and Brand */}
         <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-yellow-400 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-emerald-800 font-bold text-2xl">TA</span>
-          </div>
-          <h1 className="text-2xl font-bold text-emerald-800">Talaqqi Academy</h1>
+          {logoLembaga ? (
+            <div className="flex items-center justify-center mb-4">
+              <img src={logoLembaga} alt="Logo" className="h-20 w-20 object-contain rounded-full overflow-hidden border-2 border-emerald-700" />
+            </div>
+          ) : (
+            <div className="w-20 h-20 bg-yellow-400 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-emerald-800 font-bold text-2xl">TA</span>
+            </div>
+          )}
+          <h1 className="text-2xl font-bold text-emerald-800">{namaLembaga}</h1>
           <p className="text-emerald-600">Portal Admin</p>
         </div>
 
