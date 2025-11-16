@@ -23,18 +23,16 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, { params }) {
   try {
     await db.pendaftaran.delete({
       where: { id: params.id }
     });
-
     return NextResponse.json({ message: 'Pendaftaran deleted successfully' });
   } catch (error) {
     console.error('Error deleting pendaftaran:', error);
     return NextResponse.json({ error: 'Failed to delete pendaftaran' }, { status: 500 });
   }
 }
+
+
