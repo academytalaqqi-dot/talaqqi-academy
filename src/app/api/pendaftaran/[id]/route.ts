@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
-type RouteContext = {
-  params: Promise<{ id: string }>;
-};
-
 export async function PATCH(
   request: NextRequest,
-  context: RouteContext
+  { params }: { params: { id: string } }
 ) {
   try {
-    const params = await context.params;
     const { status } = await request.json();
     
     const pendaftaran = await db.pendaftaran.update({
@@ -30,10 +25,9 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  context: RouteContext
+  { params }: { params: { id: string } }
 ) {
   try {
-    const params = await context.params;
     await db.pendaftaran.delete({
       where: { id: params.id }
     });
