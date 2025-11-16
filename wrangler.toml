@@ -1,23 +1,5 @@
 name = "talaqqi-academy"
 compatibility_date = "2025-11-16"
+pages_build_output_dir = ".next"
 
-# Pages build output
-[build]
-command = "npm run build"
-cwd = "."
-watch_paths = []
-
-# Pages configuration
-[pages_build_output_dir]
-dir = ".next"
-
-# Environment configuration - Production
-[env.production]
-vars = { ENVIRONMENT = "production" }
-
-# D1 Database binding (inside production environment)
-[[env.production.d1_databases]]
-binding = "DB"
-database_name = "talaqqi-academy-db"
-database_id = "ed56f499-4d58-46be-9756-6682c35de216"
 
