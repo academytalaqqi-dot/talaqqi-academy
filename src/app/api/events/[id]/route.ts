@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
+type RouteContext = {
+  params: Promise<{ id: string }>;
+};
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: RouteContext
 ) {
   try {
+    const params = await context.params;
     const event = await db.event.findUnique({
       where: { id: params.id },
       include: {
@@ -31,9 +36,10 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: RouteContext
 ) {
   try {
+    const params = await context.params;
     const data = await request.json();
     console.log('=== UPDATING EVENT DATA ===');
     console.log('PertanyaanTambahan:', JSON.stringify(data.pertanyaanTambahan, null, 2));
@@ -42,7 +48,7 @@ export async function PATCH(
     console.log('Sponsor:', JSON.stringify(data.sponsor, null, 2));
     
     // Prepare pertanyaanTambahan
-    let pertanyaanTambahanToSave = null;
+    let pertanyaanTambahanToSave: string | null = null;
     if (data.pertanyaanTambahan && Array.isArray(data.pertanyaanTambahan) && data.pertanyaanTambahan.length > 0) {
       pertanyaanTambahanToSave = JSON.stringify(data.pertanyaanTambahan);
       console.log('PertanyaanTambahan will be saved:', pertanyaanTambahanToSave);
@@ -51,7 +57,7 @@ export async function PATCH(
     }
     
     // Prepare sponsor
-    let sponsorToSave = null;
+    let sponsorToSave: string | null = null;
     if (data.sponsor && Array.isArray(data.sponsor) && data.sponsor.length > 0) {
       sponsorToSave = JSON.stringify(data.sponsor);
       console.log('Sponsor will be saved:', sponsorToSave);
