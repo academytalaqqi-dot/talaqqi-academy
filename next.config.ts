@@ -1,15 +1,21 @@
 import type { NextConfig } from "next";
+import { setupDevPlatform } from "@cloudflare/next-on-pages/next-dev";
+
+// Here we use the @cloudflare/next-on-pages next plugin
+if (process.env.NODE_ENV === "development") {
+  setupDevPlatform();
+}
 
 const nextConfig: NextConfig = {
+  // Keep output: "standalone" for proper Cloudflare Workers support
   output: "standalone",
   reactStrictMode: false,
   // Disable source maps for smaller bundle
   productionBrowserSourceMaps: false,
-  // Aggressive optimization for Cloudflare Pages 25 MiB limit
+  // Optimization for Cloudflare Workers
   webpack: (config, { dev, isServer }) => {
     if (!dev && !isServer) {
       config.cache = false;
-      // Split chunks more aggressively
       config.optimization = {
         ...config.optimization,
         minimize: true,
