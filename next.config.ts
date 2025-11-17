@@ -1,39 +1,23 @@
 import type { NextConfig } from "next";
 import { setupDevPlatform } from "@cloudflare/next-on-pages/next-dev";
 
-// Here we use the @cloudflare/next-on-pages next plugin
+// Setup dev platform untuk local development
 if (process.env.NODE_ENV === "development") {
   setupDevPlatform();
 }
 
 const nextConfig: NextConfig = {
-  // Keep output: "standalone" for proper Cloudflare Workers support
-  output: "standalone",
+  // Remove 'standalone' - let Cloudflare handle it
   reactStrictMode: false,
-  // Disable source maps for smaller bundle
+  // Disable source maps untuk smaller bundle
   productionBrowserSourceMaps: false,
-  // Optimization for Cloudflare Workers
+  // Optimization untuk Cloudflare Pages
   webpack: (config, { dev, isServer }) => {
     if (!dev && !isServer) {
       config.cache = false;
       config.optimization = {
         ...config.optimization,
         minimize: true,
-        runtimeChunk: "single",
-        splitChunks: {
-          chunks: "all",
-          cacheGroups: {
-            default: false,
-            vendors: false,
-            vendor: {
-              filename: "chunks/vendor.js",
-              test: /node_modules/,
-              priority: 10,
-              reuseExistingChunk: true,
-              name: "vendor",
-            },
-          },
-        },
       };
     }
     if (dev) {
